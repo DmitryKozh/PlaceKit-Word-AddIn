@@ -247,12 +247,17 @@
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
     <AppDesigner Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="Models\" />
-    <Folder Include="Tools\" />
-    <Folder Include="ViewModels\" />
+    <Compile Include="Interfaces\IPlaceholderService.cs" />
+    <Compile Include="Models\PlaceholderInfo.cs" />
+    <Compile Include="Models\PlaceholderOperationResult.cs" />
+    <Compile Include="Models\PlaceholderPattern.cs" />
+    <Compile Include="Models\PlaceholderTag.cs" />
+    <Compile Include="Models\ProgressInfo.cs" />
+    <Compile Include="Services\PlaceholderService.cs" />
+    <Compile Include="Services\ProgressTracker.cs" />
+    <Compile Include="Tools\WordEditScope.cs" />
+    <Compile Include="Tools\WordStories.cs" />
+    <Compile Include="Tools\WordText.cs" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
