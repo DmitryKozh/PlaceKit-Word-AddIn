@@ -11,11 +11,12 @@ namespace PlaceKit
 {
     public partial class ThisAddIn
     {
-        private void ThisAddIn_Startup(object sender, System.EventArgs e)
+        void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            _ = new PlaceKitRibbon();
         }
 
-        private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
+        void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
         }
 
