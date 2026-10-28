@@ -131,6 +131,10 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Office.Tools.v4.0.Framework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -246,18 +250,43 @@
     <Compile Include="ThisAddIn.Designer.cs">
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
-    <AppDesigner Include="Properties\" />
     <Compile Include="Interfaces\IPlaceholderService.cs" />
+    <Compile Include="Interfaces\IProgressService.cs" />
+    <Compile Include="Interfaces\ISettingsService.cs" />
+    <Compile Include="Interfaces\IWordHost.cs" />
+    <Compile Include="Models\EditorPlacement.cs" />
     <Compile Include="Models\PlaceholderInfo.cs" />
     <Compile Include="Models\PlaceholderOperationResult.cs" />
     <Compile Include="Models\PlaceholderPattern.cs" />
     <Compile Include="Models\PlaceholderTag.cs" />
+    <Compile Include="Models\PlaceKitSettings.cs" />
     <Compile Include="Models\ProgressInfo.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
+    <Compile Include="Services\ProgressDialogHost.cs" />
+    <Compile Include="Services\ProgressService.cs" />
     <Compile Include="Services\ProgressTracker.cs" />
+    <Compile Include="Services\RegistrySettingsService.cs" />
+    <Compile Include="Services\WordHost.cs" />
+    <Compile Include="Tools\NativeMethods.cs" />
+    <Compile Include="Tools\RelayCommand.cs" />
+    <Compile Include="Tools\WindowPlacement.cs" />
     <Compile Include="Tools\WordEditScope.cs" />
     <Compile Include="Tools\WordStories.cs" />
     <Compile Include="Tools\WordText.cs" />
+    <Compile Include="ViewModels\ProgressViewModel.cs" />
+    <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\ProgressWindow.xaml.cs">
+      <DependentUpon>ProgressWindow.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\ProgressWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <AppDesigner Include="Properties\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
