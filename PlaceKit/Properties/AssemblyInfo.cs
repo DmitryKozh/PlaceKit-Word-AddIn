@@ -7,14 +7,16 @@ using System.Security;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("PlaceKit")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Turns {{text}} markers in Word documents into content controls and lets you fill them in one place.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("BoringJob")]
 [assembly: AssemblyProduct("PlaceKit")]
-[assembly: AssemblyCopyright("Copyright ©  2026")]
+[assembly: AssemblyCopyright("Copyright © 2026 Dzmitry Kazhamiakin")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
+[assembly: AssemblyMetadata("Developer", "Dzmitry Kazhamiakin")]
+[assembly: AssemblyMetadata("Website", "https://boringjob.work")]
 [assembly: InternalsVisibleTo("PlaceKit.Tests")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

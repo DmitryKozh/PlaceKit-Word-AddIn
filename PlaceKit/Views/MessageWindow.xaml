@@ -1,0 +1,70 @@
+<Window x:Class="PlaceKit.Views.MessageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:PlaceKit.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MessageViewModel}"
+        Title="{Binding Title}"
+        Width="440"
+        WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource DialogWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding RejectCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Command="{Binding AcceptCommand}"
+                        Content="{Binding AcceptText}"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButtonStyle}" />
+                <Button Margin="8,0,0,0"
+                        Command="{Binding RejectCommand}"
+                        Content="_No"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Visibility="{Binding IsQuestion, Converter={StaticResource BooleanToVisibility}}" />
+            </StackPanel>
+        </Border>
+
+        <Grid Margin="{StaticResource DialogPadding}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Margin="0,0,16,0" VerticalAlignment="Top" FontSize="28">
+                <TextBlock.Style>
+                    <Style BasedOn="{StaticResource IconTextStyle}" TargetType="TextBlock">
+                        <!-- Info -->
+                        <Setter Property="Text" Value="&#xE946;" />
+                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Kind}" Value="Warning">
+                                <Setter Property="Text" Value="&#xE7BA;" />
+                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind}" Value="Error">
+                                <Setter Property="Text" Value="&#xEA39;" />
+                                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind}" Value="Question">
+                                <Setter Property="Text" Value="&#xE9CE;" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Text="{Binding Message}"
+                       TextWrapping="Wrap" />
+        </Grid>
+    </DockPanel>
+</Window>

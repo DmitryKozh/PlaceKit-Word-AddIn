@@ -1,0 +1,106 @@
+<Window x:Class="PlaceKit.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:PlaceKit.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
+        Title="{Binding Title}"
+        Width="540"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=OpeningMarkerBox}"
+        Style="{DynamicResource DialogWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Command="{Binding SaveCommand}"
+                            Content="_Save"
+                            IsDefault="True"
+                            Style="{StaticResource PrimaryButtonStyle}" />
+                    <Button Margin="8,0,0,0"
+                            Command="{Binding CancelCommand}"
+                            Content="Cancel"
+                            Style="{StaticResource SecondaryButtonStyle}" />
+                </StackPanel>
+                <Button HorizontalAlignment="Left"
+                        Command="{Binding ResetCommand}"
+                        Content="_Reset to defaults"
+                        Style="{StaticResource SecondaryButtonStyle}" />
+            </DockPanel>
+        </Border>
+
+        <StackPanel Margin="{StaticResource DialogPadding}">
+            <TextBlock Style="{StaticResource SectionTextStyle}" Text="Placeholder pattern" />
+            <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Text between these markers becomes a placeholder when you click Create." />
+
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <!-- monospace text is already centred, symmetric padding -->
+                <StackPanel>
+                    <Label Content="_Opening marker" Target="{Binding ElementName=OpeningMarkerBox}" />
+                    <TextBox x:Name="OpeningMarkerBox"
+                             Padding="6,5"
+                             FontFamily="{StaticResource CodeFontFamily}"
+                             MaxLength="10"
+                             Text="{Binding OpeningMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                    <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=OpeningMarkerBox}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <Label Content="_Closing marker" Target="{Binding ElementName=ClosingMarkerBox}" />
+                    <TextBox x:Name="ClosingMarkerBox"
+                             Padding="6,5"
+                             FontFamily="{StaticResource CodeFontFamily}"
+                             MaxLength="10"
+                             Text="{Binding ClosingMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                    <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=ClosingMarkerBox}" />
+                </StackPanel>
+            </Grid>
+
+            <Border Margin="0,8,0,0"
+                    Padding="12,7,12,9"
+                    Background="{StaticResource AccentSubtleBrush}"
+                    CornerRadius="4">
+                <TextBlock>
+                    <Run Foreground="{StaticResource SecondaryTextBrush}" Text="Example:" />
+                    <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding Preview, Mode=OneWay}" />
+                </TextBlock>
+            </Border>
+
+            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="After creating placeholders" />
+            <CheckBox Content="Show a _summary and ask whether to open the editor" IsChecked="{Binding ShowCreateSummary}" />
+            <CheckBox Margin="24,10,0,0"
+                      Content="Open the _editor automatically"
+                      IsChecked="{Binding OpenEditorAfterCreate}"
+                      IsEnabled="{Binding CanChooseAutoOpen}" />
+
+            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="Open the editor in" />
+            <RadioButton Content="Side _panel next to the document" GroupName="EditorPlacement" IsChecked="{Binding OpenInSidePanel}" />
+            <RadioButton Margin="0,10,0,0"
+                         Content="Separate _window"
+                         GroupName="EditorPlacement"
+                         IsChecked="{Binding OpenInWindow}" />
+            <TextBlock Margin="24,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="The button in the editor's top-left corner moves it between the two." />
+
+            <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}">
+                <Run Text="Settings are stored in the registry:" />
+                <LineBreak />
+                <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding StorageLocation, Mode=OneWay}" />
+            </TextBlock>
+        </StackPanel>
+    </DockPanel>
+</Window>

@@ -135,6 +135,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Office.Tools.v4.0.Framework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -250,35 +251,104 @@
     <Compile Include="ThisAddIn.Designer.cs">
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
+    <Compile Include="CompositionRoot.cs" />
+    <Compile Include="Interfaces\IDialogService.cs" />
+    <Compile Include="Interfaces\IEditorService.cs" />
+    <Compile Include="Interfaces\IPlaceholderDocument.cs" />
     <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\IProgressService.cs" />
     <Compile Include="Interfaces\ISettingsService.cs" />
+    <Compile Include="Interfaces\ITaskPaneService.cs" />
+    <Compile Include="Interfaces\IUrlLauncher.cs" />
     <Compile Include="Interfaces\IWordHost.cs" />
     <Compile Include="Models\EditorPlacement.cs" />
+    <Compile Include="Models\MessageKind.cs" />
     <Compile Include="Models\PlaceholderInfo.cs" />
     <Compile Include="Models\PlaceholderOperationResult.cs" />
     <Compile Include="Models\PlaceholderPattern.cs" />
     <Compile Include="Models\PlaceholderTag.cs" />
     <Compile Include="Models\PlaceKitSettings.cs" />
+    <Compile Include="Models\ProductInfo.cs" />
     <Compile Include="Models\ProgressInfo.cs" />
+    <Compile Include="Services\DialogService.cs" />
+    <Compile Include="Services\EditorService.cs" />
+    <Compile Include="Services\PlaceholderDocument.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\ProgressDialogHost.cs" />
     <Compile Include="Services\ProgressService.cs" />
     <Compile Include="Services\ProgressTracker.cs" />
     <Compile Include="Services\RegistrySettingsService.cs" />
+    <Compile Include="Services\TaskPaneService.cs" />
+    <Compile Include="Services\UrlLauncher.cs" />
     <Compile Include="Services\WordHost.cs" />
+    <Compile Include="Tools\DialogServiceExtensions.cs" />
     <Compile Include="Tools\NativeMethods.cs" />
     <Compile Include="Tools\RelayCommand.cs" />
+    <Compile Include="Tools\TextFormat.cs" />
     <Compile Include="Tools\WindowPlacement.cs" />
     <Compile Include="Tools\WordEditScope.cs" />
     <Compile Include="Tools\WordStories.cs" />
     <Compile Include="Tools\WordText.cs" />
+    <Compile Include="ViewModels\AboutViewModel.cs" />
+    <Compile Include="ViewModels\CreateSummaryViewModel.cs" />
+    <Compile Include="ViewModels\DialogCloseRequestedEventArgs.cs" />
+    <Compile Include="ViewModels\DialogViewModelBase.cs" />
+    <Compile Include="ViewModels\EditorViewModel.cs" />
+    <Compile Include="ViewModels\MessageViewModel.cs" />
+    <Compile Include="ViewModels\PlaceholderItemViewModel.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
+    <Compile Include="ViewModels\RibbonViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\AboutWindow.xaml.cs">
+      <DependentUpon>AboutWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\CreateSummaryWindow.xaml.cs">
+      <DependentUpon>CreateSummaryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditorPaneControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\EditorView.xaml.cs">
+      <DependentUpon>EditorView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\EditorWindow.xaml.cs">
+      <DependentUpon>EditorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MessageWindow.xaml.cs">
+      <DependentUpon>MessageWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ProgressWindow.xaml.cs">
       <DependentUpon>ProgressWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\AboutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\CreateSummaryWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\EditorView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\EditorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\MessageWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\ProgressWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SettingsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
