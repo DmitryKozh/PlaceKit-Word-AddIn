@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -13,15 +14,18 @@ namespace PlaceKit.ViewModels
     public sealed class EditorViewModel : DialogViewModelBase
     {
         const string Caption = "PlaceKit";
+        const string ValuesFileFilter = "PlaceKit values (*.json)|*.json|All files (*.*)|*.*";
 
         readonly IPlaceholderDocument _document;
         readonly IDialogService _dialogs;
+        readonly IPlaceholderValuesFile _valuesFile;
 
-        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs)
+        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs, IPlaceholderValuesFile valuesFile)
             : base("Fill placeholders")
         {
             _document = document;
             _dialogs = dialogs;
+            _valuesFile = valuesFile;
             SetItems(Enumerable.Empty<PlaceholderItemViewModel>());
 
             LocateCommand = new RelayCommand<PlaceholderItemViewModel>(item => _dialogs.RunAndReportErrors(() => Locate(item)), item => item != null);
@@ -30,6 +34,8 @@ namespace PlaceKit.ViewModels
             CancelCommand = new RelayCommand(Cancel);
             RefreshCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Reload));
             MoveCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Move));
+            ImportCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Import), () => !IsEmpty);
+            ExportCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Export), () => Items.Any(HasValue));
         }
 
         public EditorPlacement Placement { get; private set; }
@@ -89,6 +95,10 @@ namespace PlaceKit.ViewModels
         public ICommand RefreshCommand { get; }
 
         public ICommand MoveCommand { get; }
+
+        public ICommand ImportCommand { get; }
+
+        public ICommand ExportCommand { get; }
 
         public void AttachTo(EditorPlacement placement)
         {
@@ -188,6 +198,76 @@ namespace PlaceKit.ViewModels
                 Close(true);
             }
         }
+
+        // Fills in the editor only; the user reviews the values and saves them like any other edit.
+        void Import()
+        {
+            string path = _dialogs.ShowOpenFileDialog("Import values", ValuesFileFilter);
+            if (path == null)
+            {
+                return;
+            }
+
+            IReadOnlyDictionary<string, string> values;
+            try
+            {
+                values = _valuesFile.Read(path);
+            }
+            catch (Exception ex) when (IsFileError(ex))
+            {
+                _dialogs.ShowMessage(Caption, $"Could not import {Path.GetFileName(path)}. {ex.Message}", MessageKind.Warning);
+                return;
+            }
+
+            int filled = 0;
+            foreach (PlaceholderItemViewModel item in Items)
+            {
+                if (values.TryGetValue(item.Name, out string value))
+                {
+                    item.Value = value;
+                    filled++;
+                }
+            }
+
+            if (filled == 0)
+            {
+                _dialogs.ShowMessage(Caption, $"None of the names in {Path.GetFileName(path)} match a placeholder in this document.", MessageKind.Information);
+                return;
+            }
+
+            string message = $"Filled in {TextFormat.Quantity(filled, "placeholder")} from {Path.GetFileName(path)}. Check the values and click Save to write them to the document.";
+            int unmatched = values.Count - filled;
+            if (unmatched > 0)
+            {
+                message += $" {TextFormat.Quantity(unmatched, "name")} in the file did not match a placeholder.";
+            }
+
+            _dialogs.ShowMessage(Caption, message, MessageKind.Information);
+        }
+
+        // Exports what the editor shows, unsaved edits included. Empty placeholders are left out,
+        // so importing the file never clears a value.
+        void Export()
+        {
+            string path = _dialogs.ShowSaveFileDialog("Export values", ValuesFileFilter, _document.Name + ".json");
+            if (path == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _valuesFile.Write(path, Items.Where(HasValue).Select(item => new KeyValuePair<string, string>(item.Name, item.Value)));
+            }
+            catch (Exception ex) when (IsFileError(ex))
+            {
+                _dialogs.ShowMessage(Caption, $"Could not save {Path.GetFileName(path)}. {ex.Message}", MessageKind.Warning);
+            }
+        }
+
+        static bool HasValue(PlaceholderItemViewModel item) => !string.IsNullOrEmpty(item.Value);
+
+        static bool IsFileError(Exception ex) => ex is IOException || ex is UnauthorizedAccessException || ex is InvalidDataException;
 
         void Cancel()
         {

@@ -6,6 +6,8 @@ namespace PlaceKit.Interfaces
 {
     public interface IPlaceholderDocument
     {
+        string Name { get; }
+
         IReadOnlyList<PlaceholderInfo> LoadPlaceholders();
 
         PlaceholderOperationResult SavePlaceholders(IReadOnlyDictionary<string, string> values);

@@ -19,6 +19,13 @@ namespace PlaceKit.Tests.Fakes
 
         public Action<DialogViewModelBase> OnShowDialog { get; set; } = viewModel => { };
 
+        // What the user picks in the file dialogs; null means Cancel.
+        public string OpenFileResult { get; set; }
+
+        public string SaveFileResult { get; set; }
+
+        public string SuggestedFileName { get; private set; }
+
         public bool? ShowDialog(DialogViewModelBase viewModel)
         {
             bool? result = null;
@@ -45,6 +52,14 @@ namespace PlaceKit.Tests.Fakes
         {
             Confirmations++;
             return ConfirmAnswer;
+        }
+
+        public string ShowOpenFileDialog(string title, string filter) => OpenFileResult;
+
+        public string ShowSaveFileDialog(string title, string filter, string fileName)
+        {
+            SuggestedFileName = fileName;
+            return SaveFileResult;
         }
     }
 }

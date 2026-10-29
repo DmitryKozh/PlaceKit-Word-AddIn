@@ -8,6 +8,7 @@ using PlaceKit.Interfaces;
 using PlaceKit.Models;
 using PlaceKit.ViewModels;
 using PlaceKit.Views;
+using Forms = System.Windows.Forms;
 
 namespace PlaceKit.Services
 {
@@ -86,6 +87,26 @@ namespace PlaceKit.Services
         public bool Confirm(string title, string message) =>
             ShowDialog(new MessageViewModel(title, message, MessageKind.Question)) == true;
 
+        public string ShowOpenFileDialog(string title, string filter)
+        {
+            using (var dialog = new Forms.OpenFileDialog { Title = title, Filter = filter })
+            {
+                return dialog.ShowDialog(FileDialogOwner()) == Forms.DialogResult.OK ? dialog.FileName : null;
+            }
+        }
+
+        public string ShowSaveFileDialog(string title, string filter, string fileName)
+        {
+            using (var dialog = new Forms.SaveFileDialog { Title = title, Filter = filter, FileName = fileName })
+            {
+                return dialog.ShowDialog(FileDialogOwner()) == Forms.DialogResult.OK ? dialog.FileName : null;
+            }
+        }
+
+        // The WinForms file dialogs accept any window handle as owner, including Word's.
+        Forms.IWin32Window FileDialogOwner() =>
+            new WindowHandle(_openDialogs.Count > 0 ? new WindowInteropHelper(_openDialogs.Peek()).Handle : _wordHost.MainWindowHandle);
+
         void SetOwner(Window window)
         {
             if (_openDialogs.Count > 0)
@@ -103,6 +124,16 @@ namespace PlaceKit.Services
             {
                 window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
+        }
+
+        sealed class WindowHandle : Forms.IWin32Window
+        {
+            public WindowHandle(IntPtr handle)
+            {
+                Handle = handle;
+            }
+
+            public IntPtr Handle { get; }
         }
     }
 }

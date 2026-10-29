@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
 using Word = Microsoft.Office.Interop.Word;
@@ -17,6 +18,8 @@ namespace PlaceKit.Services
             _placeholders = placeholders;
             _progress = progress;
         }
+
+        public string Name => Path.GetFileNameWithoutExtension(_document.Name);
 
         public IReadOnlyList<PlaceholderInfo> LoadPlaceholders() =>
             _progress.Run("Loading placeholders", (progress, token) => _placeholders.GetPlaceholders(_document, progress, token));

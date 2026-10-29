@@ -113,6 +113,9 @@
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=10.0.0.14, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.10.0.14\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="PropertyChanged, Version=4.1.0.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyChanged.Fody.4.1.0\lib\net40\PropertyChanged.dll</HintPath>
     </Reference>
@@ -256,6 +259,7 @@
     <Compile Include="Interfaces\IEditorService.cs" />
     <Compile Include="Interfaces\IPlaceholderDocument.cs" />
     <Compile Include="Interfaces\IPlaceholderService.cs" />
+    <Compile Include="Interfaces\IPlaceholderValuesFile.cs" />
     <Compile Include="Interfaces\IProgressService.cs" />
     <Compile Include="Interfaces\ISettingsService.cs" />
     <Compile Include="Interfaces\ITaskPaneService.cs" />
@@ -274,6 +278,7 @@
     <Compile Include="Services\EditorService.cs" />
     <Compile Include="Services\PlaceholderDocument.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
+    <Compile Include="Services\PlaceholderValuesFile.cs" />
     <Compile Include="Services\ProgressDialogHost.cs" />
     <Compile Include="Services\ProgressService.cs" />
     <Compile Include="Services\ProgressTracker.cs" />

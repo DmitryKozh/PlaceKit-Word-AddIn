@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
@@ -11,6 +12,7 @@ namespace PlaceKit.Tests.ViewModels
     public class EditorViewModelTests
     {
         readonly FakeDialogs _dialogs = new FakeDialogs();
+        readonly FakeValuesFile _valuesFile = new FakeValuesFile();
         readonly List<bool?> _closes = new List<bool?>();
         FakeDocument _document;
         EditorViewModel _editor;
@@ -22,7 +24,7 @@ namespace PlaceKit.Tests.ViewModels
                 new PlaceholderInfo("Client name", "", 2, false),
                 new PlaceholderInfo("Order", "42", 1, false),
                 new PlaceholderInfo("Date", "", 1, false));
-            _editor = new EditorViewModel(_document, _dialogs);
+            _editor = new EditorViewModel(_document, _dialogs, _valuesFile);
             _editor.CloseRequested += (sender, e) => _closes.Add(e.DialogResult);
             _editor.Reload();
         }
@@ -30,7 +32,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void BeforeLoading_IsEmpty()
         {
-            var editor = new EditorViewModel(_document, _dialogs);
+            var editor = new EditorViewModel(_document, _dialogs, _valuesFile);
 
             Assert.IsTrue(editor.IsEmpty);
             Assert.IsFalse(editor.HasNoMatches);
@@ -205,9 +207,94 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Export_WritesTheFilledInValuesInDocumentOrder()
+        {
+            _editor.Items[0].Value = "John\r\nSmith";
+            _dialogs.SaveFileResult = @"C:\Templates\Offer.json";
+
+            _editor.ExportCommand.Execute(null);
+
+            Assert.AreEqual("Offer.json", _dialogs.SuggestedFileName);
+            CollectionAssert.AreEqual(
+                new[] { new KeyValuePair<string, string>("Client name", "John\r\nSmith"), new KeyValuePair<string, string>("Order", "42") },
+                _valuesFile.Files[@"C:\Templates\Offer.json"]);
+        }
+
+        [TestMethod]
+        public void Export_NeedsAtLeastOneValue()
+        {
+            _editor.Items[1].Value = "";
+
+            Assert.IsFalse(_editor.ExportCommand.CanExecute(null));
+        }
+
+        [TestMethod]
+        public void Export_DoesNothingWhenCanceled()
+        {
+            _editor.ExportCommand.Execute(null);
+
+            Assert.AreEqual(0, _valuesFile.Files.Count);
+        }
+
+        [TestMethod]
+        public void Import_FillsMatchingNamesAsUnsavedChanges()
+        {
+            _valuesFile.Files["values.json"] = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("CLIENT NAME", "Contoso"),
+                new KeyValuePair<string, string>("Date", "12 November"),
+                new KeyValuePair<string, string>("Unknown", "x"),
+            };
+            _dialogs.OpenFileResult = "values.json";
+
+            _editor.ImportCommand.Execute(null);
+
+            Assert.AreEqual("Contoso", _editor.Items[0].Value);
+            Assert.AreEqual("42", _editor.Items[1].Value, "not in the file, so not touched");
+            Assert.AreEqual("12 November", _editor.Items[2].Value);
+            Assert.AreEqual(2, _editor.ModifiedCount);
+            Assert.AreEqual(0, _document.Saves.Count, "nothing is written until the user saves");
+            StringAssert.StartsWith(_dialogs.Messages.Single(), "Filled in 2 placeholders from values.json.");
+            StringAssert.EndsWith(_dialogs.Messages.Single(), "1 name in the file did not match a placeholder.");
+        }
+
+        [TestMethod]
+        public void Import_ReportsAFileWithoutMatchingNames()
+        {
+            _valuesFile.Files["other.json"] = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("Unknown", "x") };
+            _dialogs.OpenFileResult = "other.json";
+
+            _editor.ImportCommand.Execute(null);
+
+            Assert.AreEqual(0, _editor.ModifiedCount);
+            StringAssert.StartsWith(_dialogs.Messages.Single(), "None of the names in other.json");
+        }
+
+        [TestMethod]
+        public void Import_ReportsAnInvalidFile()
+        {
+            _valuesFile.ReadError = new InvalidDataException("It is not a PlaceKit values file.");
+            _dialogs.OpenFileResult = "broken.json";
+
+            _editor.ImportCommand.Execute(null);
+
+            Assert.AreEqual(0, _editor.ModifiedCount);
+            CollectionAssert.AreEqual(new[] { "Could not import broken.json. It is not a PlaceKit values file." }, _dialogs.Messages);
+        }
+
+        [TestMethod]
+        public void Import_NeedsPlaceholders()
+        {
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile);
+            editor.Reload();
+
+            Assert.IsFalse(editor.ImportCommand.CanExecute(null));
+        }
+
+        [TestMethod]
         public void CommandErrors_AreReportedNotThrown()
         {
-            var editor = new EditorViewModel(new FailingDocument(), _dialogs);
+            var editor = new EditorViewModel(new FailingDocument(), _dialogs, _valuesFile);
 
             editor.RefreshCommand.Execute(null);
 

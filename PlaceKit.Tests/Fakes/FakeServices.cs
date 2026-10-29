@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
@@ -49,6 +50,25 @@ namespace PlaceKit.Tests.Fakes
         public void Hide(EditorViewModel editor) => Calls.Add("hide");
 
         public void Remove(EditorViewModel editor) => Calls.Add("remove");
+    }
+
+    sealed class FakeValuesFile : IPlaceholderValuesFile
+    {
+        public Dictionary<string, List<KeyValuePair<string, string>>> Files { get; } = new Dictionary<string, List<KeyValuePair<string, string>>>();
+
+        public Exception ReadError { get; set; }
+
+        public IReadOnlyDictionary<string, string> Read(string path)
+        {
+            if (ReadError != null)
+            {
+                throw ReadError;
+            }
+
+            return Files[path].ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public void Write(string path, IEnumerable<KeyValuePair<string, string>> values) => Files[path] = values.ToList();
     }
 
     sealed class FakeUrlLauncher : IUrlLauncher

@@ -15,15 +15,17 @@ namespace PlaceKit.Services
         readonly IDialogService _dialogs;
         readonly ISettingsService _settings;
         readonly ITaskPaneService _panes;
+        readonly IPlaceholderValuesFile _valuesFile;
         readonly Dictionary<EditorViewModel, Word.Document> _documents = new Dictionary<EditorViewModel, Word.Document>();
 
-        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes)
+        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes, IPlaceholderValuesFile valuesFile)
         {
             _placeholders = placeholders;
             _progress = progress;
             _dialogs = dialogs;
             _settings = settings;
             _panes = panes;
+            _valuesFile = valuesFile;
         }
 
         public void Open(Word.Document document)
@@ -40,7 +42,7 @@ namespace PlaceKit.Services
             }
 
             PlaceKitSettings settings = _settings.Load();
-            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs);
+            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs, _valuesFile);
             editor.Reload();
             if (editor.IsEmpty)
             {

@@ -144,7 +144,7 @@
             </DockPanel>
         </Border>
 
-        <Grid Margin="16,16,16,12" DockPanel.Dock="Top">
+        <Grid Margin="16,16,16,4" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition />
@@ -192,6 +192,28 @@
                     ToolTip="Reload the placeholders from the document. Unsaved values are kept."
                     Visibility="{Binding IsInSidePanel, Converter={StaticResource BooleanToVisibility}}" />
         </Grid>
+
+        <StackPanel Margin="8,0,16,8" DockPanel.Dock="Top" Orientation="Horizontal">
+            <Button AutomationProperties.Name="Import"
+                    Command="{Binding ImportCommand}"
+                    Style="{StaticResource CommandButtonStyle}"
+                    ToolTip="Fill in the placeholders from a values file. Nothing is written to the document until you save.">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xE8B5;" />
+                    <AccessText Style="{StaticResource CommandLabelStyle}" Text="_Import" />
+                </StackPanel>
+            </Button>
+            <Button Margin="4,0,0,0"
+                    AutomationProperties.Name="Export"
+                    Command="{Binding ExportCommand}"
+                    Style="{StaticResource CommandButtonStyle}"
+                    ToolTip="Save the filled-in values to a file, to reuse them in other documents.">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xEDE1;" />
+                    <AccessText Style="{StaticResource CommandLabelStyle}" Text="_Export" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
 
         <Grid>
             <ItemsControl Focusable="False"

@@ -6,6 +6,15 @@ Word add-in for documents with placeholders. Mark the variable parts of a docume
 
 - Create turns `{{name}}` markers into plain-text content controls. Title is the name, tag is `PlaceKit-{name}`. Works in the body, tables, headers, footers, text boxes and notes.
 - Fill opens the editor in a side panel next to the document, or in a separate window (the button in its top-left corner switches between the two). It lists every placeholder once, even if it is used several times, has a search box and can jump to a placeholder in the document.
+- Export and Import in the editor save the filled-in values to a JSON file and fill them in from one, so the same data (company name, address, ...) can be reused in other documents. Names are matched ignoring case, and imported values reach the document only when you click Save:
+
+  ```json
+  {
+    "Client name": "Contoso Ltd.",
+    "Address": "221B Baker Street\nLondon"
+  }
+  ```
+
 - Clear turns the controls back into text. Placeholders that were never filled in become `{{name}}` markers again.
 - Settings: the markers (`[[name]]`, `<<name>>`, ...), whether to ask about opening the editor after Create, and where the editor opens. Stored in `HKEY_CURRENT_USER\Software\BoringJob\PlaceKit`.
 
