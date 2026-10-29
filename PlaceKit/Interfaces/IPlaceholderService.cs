@@ -15,7 +15,11 @@ namespace PlaceKit.Interfaces
 
         PlaceholderOperationResult UpdatePlaceholders(Word.Document document, IReadOnlyDictionary<string, string> values, IProgress<ProgressInfo> progress, CancellationToken token);
 
-        PlaceholderOperationResult ClearPlaceholders(Word.Document document, PlaceholderPattern pattern, IProgress<ProgressInfo> progress, CancellationToken token);
+        // The names of the placeholders that are not filled in, once per occurrence, in document order.
+        IReadOnlyList<string> GetEmptyPlaceholders(Word.Document document, IProgress<ProgressInfo> progress, CancellationToken token);
+
+        // Turns the placeholders into regular text; empty ones become markers again or are deleted.
+        PlaceholderOperationResult FinalizePlaceholders(Word.Document document, PlaceholderPattern pattern, EmptyPlaceholderAction emptyPlaceholders, IProgress<ProgressInfo> progress, CancellationToken token);
 
         bool SelectPlaceholder(Word.Document document, string name, int occurrence);
     }

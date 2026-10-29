@@ -17,8 +17,9 @@ namespace PlaceKit.ViewModels
         readonly IDialogService _dialogs;
         readonly IProgressService _progress;
         readonly IEditorService _editors;
+        readonly IGuideService _guide;
 
-        public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors)
+        public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors, IGuideService guide, ProductInfo product, IUrlLauncher urlLauncher)
         {
             _wordHost = wordHost;
             _placeholders = placeholders;
@@ -26,23 +27,30 @@ namespace PlaceKit.ViewModels
             _dialogs = dialogs;
             _progress = progress;
             _editors = editors;
+            _guide = guide;
 
             CreateCommand = new RelayCommand(() => Run(CreatePlaceholders));
             FillCommand = new RelayCommand(() => Run(FillPlaceholders));
-            ClearCommand = new RelayCommand(() => Run(ClearPlaceholders));
+            FinalizeCommand = new RelayCommand(() => Run(FinalizePlaceholders));
+            GuideCommand = new RelayCommand(() => Run(() => _guide.CreateGuide(_settings.Load().CreatePattern())));
             SettingsCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<SettingsViewModel>()));
             AboutCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<AboutViewModel>()));
+            HireCommand = new RelayCommand(() => Run(() => urlLauncher.Open(product.Link(product.Website, "ribbon"))));
         }
 
         public ICommand CreateCommand { get; }
 
         public ICommand FillCommand { get; }
 
-        public ICommand ClearCommand { get; }
+        public ICommand FinalizeCommand { get; }
+
+        public ICommand GuideCommand { get; }
 
         public ICommand SettingsCommand { get; }
 
         public ICommand AboutCommand { get; }
+
+        public ICommand HireCommand { get; }
 
         void CreatePlaceholders()
         {
@@ -59,7 +67,7 @@ namespace PlaceKit.ViewModels
             if (result.WasCanceled)
             {
                 _editors.Refresh(document);
-                ShowCanceled(result, "created");
+                ShowMessage(TextFormat.Canceled(result.Processed, "created"), MessageKind.Information);
             }
             else if (result.Processed == 0)
             {
@@ -107,33 +115,11 @@ namespace PlaceKit.ViewModels
             }
         }
 
-        void ClearPlaceholders()
+        void FinalizePlaceholders()
         {
-            if (!TryGetEditableDocument(out Word.Document document))
+            if (TryGetEditableDocument(out Word.Document document))
             {
-                return;
-            }
-
-            PlaceholderPattern pattern = _settings.Load().CreatePattern();
-            PlaceholderOperationResult result = _progress.Run("Clearing placeholders",
-                (progress, token) => _placeholders.ClearPlaceholders(document, pattern, progress, token));
-            _editors.Refresh(document);
-
-            if (result.WasCanceled)
-            {
-                ShowCanceled(result, "converted");
-            }
-            else if (result.Processed == 0 && result.Skipped == 0)
-            {
-                ShowMessage("This document has no placeholders to clear.", MessageKind.Information);
-            }
-            else if (result.Skipped > 0)
-            {
-                ShowMessage($"{TextFormat.Quantity(result.Processed, "placeholder")} converted to regular text, {result.Skipped} could not be converted.", MessageKind.Warning);
-            }
-            else
-            {
-                ShowMessage($"{TextFormat.Quantity(result.Processed, "placeholder")} converted to regular text.", MessageKind.Information);
+                _editors.FinalizeDocument(document);
             }
         }
 
@@ -155,9 +141,6 @@ namespace PlaceKit.ViewModels
 
             return true;
         }
-
-        void ShowCanceled(PlaceholderOperationResult result, string verb) =>
-            ShowMessage($"The operation was canceled. Placeholders {verb} so far: {result.Processed}. Press Ctrl+Z in Word to undo them.", MessageKind.Information);
 
         void ShowMessage(string message, MessageKind kind) => _dialogs.ShowMessage(Caption, message, kind);
 

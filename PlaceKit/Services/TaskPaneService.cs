@@ -56,6 +56,21 @@ namespace PlaceKit.Services
             }
 
             _panes.Remove(editor);
+
+            // Removing disposes the pane's control, which may still be handling the click that closed the editor.
+            try
+            {
+                pane.Visible = false;
+                pane.Control.BeginInvoke(new Action(() => RemovePane(pane)));
+            }
+            catch (Exception ex) when (ex is COMException || ex is ObjectDisposedException || ex is InvalidOperationException)
+            {
+                RemovePane(pane);
+            }
+        }
+
+        void RemovePane(CustomTaskPane pane)
+        {
             try
             {
                 _taskPanes().Remove(pane);

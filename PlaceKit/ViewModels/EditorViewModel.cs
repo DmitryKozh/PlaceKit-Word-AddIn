@@ -31,7 +31,8 @@ namespace PlaceKit.ViewModels
             LocateCommand = new RelayCommand<PlaceholderItemViewModel>(item => _dialogs.RunAndReportErrors(() => Locate(item)), item => item != null);
             ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
             SaveCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Save), () => HasChanges);
-            CancelCommand = new RelayCommand(Cancel);
+            SaveAndFinalizeCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(SaveAndFinalize), () => !IsEmpty);
+            CloseCommand = new RelayCommand(CloseEditor);
             RefreshCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Reload));
             MoveCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Move));
             ImportCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Import), () => !IsEmpty);
@@ -46,6 +47,9 @@ namespace PlaceKit.ViewModels
 
         // null closes the editor for good
         public EditorPlacement? RequestedPlacement { get; private set; }
+
+        // Set by Save and finalize: the host finalizes the document after the editor closes.
+        public bool FinalizeRequested { get; private set; }
 
         public IReadOnlyList<PlaceholderItemViewModel> Items { get; private set; }
 
@@ -90,7 +94,9 @@ namespace PlaceKit.ViewModels
 
         public ICommand SaveCommand { get; }
 
-        public ICommand CancelCommand { get; }
+        public ICommand SaveAndFinalizeCommand { get; }
+
+        public ICommand CloseCommand { get; }
 
         public ICommand RefreshCommand { get; }
 
@@ -104,6 +110,7 @@ namespace PlaceKit.ViewModels
         {
             Placement = placement;
             RequestedPlacement = null;
+            FinalizeRequested = false;
         }
 
         public void Reload()
@@ -177,18 +184,27 @@ namespace PlaceKit.ViewModels
             }
         }
 
-        void Save()
+        // Writes the edits to the document. False when the user canceled.
+        public bool SaveChanges()
         {
             PlaceholderOperationResult result = _document.SavePlaceholders(GetChanges());
             if (result.WasCanceled)
             {
-                _dialogs.ShowMessage(Caption, $"Saving was canceled. Placeholders updated so far: {result.Processed}. Press Ctrl+Z in Word to undo them.", MessageKind.Information);
+                _dialogs.ShowMessage(Caption, TextFormat.Canceled(result.Processed, "updated"), MessageKind.Information);
+                return false;
             }
-            else if (result.Skipped > 0)
+
+            if (result.Skipped > 0)
             {
                 _dialogs.ShowMessage(Caption, $"{TextFormat.Quantity(result.Skipped, "content control")} could not be updated. They may be locked.", MessageKind.Warning);
             }
 
+            return true;
+        }
+
+        void Save()
+        {
+            SaveChanges();
             if (IsInSidePanel)
             {
                 Reload();
@@ -197,6 +213,17 @@ namespace PlaceKit.ViewModels
             {
                 Close(true);
             }
+        }
+
+        void SaveAndFinalize()
+        {
+            if (HasChanges && !SaveChanges())
+            {
+                return;
+            }
+
+            FinalizeRequested = true;
+            Close(true);
         }
 
         // Fills in the editor only; the user reviews the values and saves them like any other edit.
@@ -269,7 +296,7 @@ namespace PlaceKit.ViewModels
 
         static bool IsFileError(Exception ex) => ex is IOException || ex is UnauthorizedAccessException || ex is InvalidDataException;
 
-        void Cancel()
+        void CloseEditor()
         {
             if (CanClose())
             {

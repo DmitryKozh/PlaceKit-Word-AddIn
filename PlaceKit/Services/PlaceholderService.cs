@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
@@ -18,7 +19,7 @@ namespace PlaceKit.Services
             List<Word.Range> stories = WordStories.GetTextStories(document).ToList();
             ProgressTracker tracker = new ProgressTracker(stories.Sum(story => pattern.CountCandidates(story.Text)), progress);
 
-            using (WordEditScope.Begin(document, "PlaceKit: Create placeholders"))
+            using (WordEditScope.Begin(document, "PlaceKit: Create placeholders", untracked: true))
             {
                 foreach (Word.Range story in stories.TakeWhile(story => !token.IsCancellationRequested))
                 {
@@ -51,14 +52,35 @@ namespace PlaceKit.Services
         public PlaceholderOperationResult UpdatePlaceholders(Word.Document document, IReadOnlyDictionary<string, string> values, IProgress<ProgressInfo> progress, CancellationToken token)
         {
             List<PlaceholderControl> targets = FindPlaceholders(document).Where(placeholder => values.ContainsKey(placeholder.Name)).ToList();
-            return ModifyEach(document, "PlaceKit: Fill placeholders", targets, progress, token,
+            return ModifyEach(document, "PlaceKit: Fill placeholders", untracked: false, targets, progress, token,
                 placeholder => WriteValue(placeholder.Control, values[placeholder.Name]));
         }
 
-        public PlaceholderOperationResult ClearPlaceholders(Word.Document document, PlaceholderPattern pattern, IProgress<ProgressInfo> progress, CancellationToken token)
+        public IReadOnlyList<string> GetEmptyPlaceholders(Word.Document document, IProgress<ProgressInfo> progress, CancellationToken token)
         {
-            return ModifyEach(document, "PlaceKit: Clear placeholders", FindPlaceholders(document), progress, token,
-                placeholder => ConvertToText(placeholder.Control, pattern.Format(placeholder.Name)));
+            List<PlaceholderControl> placeholders = FindPlaceholders(document);
+            ProgressTracker tracker = new ProgressTracker(placeholders.Count, progress);
+            List<string> empty = new List<string>();
+
+            foreach (PlaceholderControl placeholder in placeholders)
+            {
+                token.ThrowIfCancellationRequested();
+                if (IsEmpty(placeholder.Control))
+                {
+                    empty.Add(placeholder.Name);
+                }
+
+                tracker.Add(succeeded: true);
+            }
+
+            return empty;
+        }
+
+        public PlaceholderOperationResult FinalizePlaceholders(Word.Document document, PlaceholderPattern pattern, EmptyPlaceholderAction emptyPlaceholders,
+            IProgress<ProgressInfo> progress, CancellationToken token)
+        {
+            return ModifyEach(document, "PlaceKit: Finalize placeholders", untracked: true, FindPlaceholders(document), progress, token,
+                placeholder => ConvertToText(placeholder.Control, emptyPlaceholders == EmptyPlaceholderAction.KeepMarkers ? pattern.Format(placeholder.Name) : null));
         }
 
         public bool SelectPlaceholder(Word.Document document, string name, int occurrence)
@@ -141,7 +163,36 @@ namespace PlaceKit.Services
         }
 
         static string ReadValue(Word.ContentControl control) =>
-            control.ShowingPlaceholderText ? string.Empty : WordText.ToDisplay(control.Range.Text);
+            control.ShowingPlaceholderText ? string.Empty : WordText.ToDisplay(TextWithoutDeletions(control.Range));
+
+        // Also empty when a tracked deletion is all that is left in it.
+        static bool IsEmpty(Word.ContentControl control) =>
+            control.ShowingPlaceholderText || TextWithoutDeletions(control.Range).Length == 0;
+
+        // The text as it reads once the tracked changes are accepted; Range.Text includes deleted text.
+        // In a plain-text control each character is one position, so offsets match.
+        static string TextWithoutDeletions(Word.Range range)
+        {
+            string text = range.Text ?? string.Empty;
+            List<Word.Range> deletions = range.Revisions.Cast<Word.Revision>()
+                .Where(revision => revision.Type == Word.WdRevisionType.wdRevisionDelete)
+                .Select(revision => revision.Range)
+                .OrderByDescending(deleted => deleted.Start)
+                .ToList();
+
+            StringBuilder kept = new StringBuilder(text);
+            foreach (Word.Range deleted in deletions)
+            {
+                int start = Math.Max(deleted.Start, range.Start) - range.Start;
+                int end = Math.Min(Math.Min(deleted.End, range.End) - range.Start, kept.Length);
+                if (end > start)
+                {
+                    kept.Remove(start, end - start);
+                }
+            }
+
+            return kept.ToString();
+        }
 
         static void WriteValue(Word.ContentControl control, string value)
         {
@@ -154,23 +205,71 @@ namespace PlaceKit.Services
             control.Range.Text = WordText.ToWord(value);
         }
 
-        static void ConvertToText(Word.ContentControl control, string marker)
+        // An empty control becomes its marker again, or is deleted when there is no marker.
+        static void ConvertToText(Word.ContentControl control, string emptyMarker)
         {
             control.LockContentControl = false;
             control.LockContents = false;
-            if (control.ShowingPlaceholderText)
+            if (!IsEmpty(control))
             {
-                control.Range.Text = marker;
+                control.Delete(DeleteContents: false);
             }
-
-            control.Delete(DeleteContents: false);
+            else if (emptyMarker != null)
+            {
+                control.Range.Text = emptyMarker;
+                control.Delete(DeleteContents: false);
+            }
+            else
+            {
+                // Where the control starts. Word may remove a space next to it too (smart cut),
+                // so the neighbours are read after the deletion.
+                Word.Range gap = control.Range.Duplicate;
+                gap.SetRange(control.Range.Start - 1, control.Range.Start - 1);
+                control.Delete(DeleteContents: true);
+                try
+                {
+                    RemoveSpaceLeftBehind(gap);
+                }
+                catch (COMException ex)
+                {
+                    // The placeholder is gone; a space left next to it is only cosmetic.
+                    Trace.TraceWarning("PlaceKit: cannot remove the space next to a deleted placeholder: {0}", ex.Message);
+                }
+            }
         }
 
-        static PlaceholderOperationResult ModifyEach(Word.Document document, string undoEntryName, IReadOnlyCollection<PlaceholderControl> placeholders,
+        // "Dear {{Name}}, see" becomes "Dear, see", not "Dear , see", "a {{B}} c" keeps one space,
+        // and no space is left at the start or the end of a line.
+        static void RemoveSpaceLeftBehind(Word.Range gap)
+        {
+            const string LineEnds = "\r\a\v";
+            Word.Range before = gap.Duplicate;
+            before.SetRange(Math.Max(0, gap.Start - 1), gap.Start);
+            Word.Range after = gap.Duplicate;
+            after.SetRange(gap.Start, gap.Start + 1);
+            char previous = CharacterOf(before);
+            char next = CharacterOf(after);
+
+            // Range.Delete would let Word's smart cut put the space back.
+            if (previous == ' ' && (" ,.;:!?)" + LineEnds).IndexOf(next) >= 0)
+            {
+                before.Text = string.Empty;
+            }
+            else if (next == ' ' && LineEnds.IndexOf(previous) >= 0)
+            {
+                after.Text = string.Empty;
+            }
+        }
+
+        // The start or the end of the story counts as a line end; another control's tag reads as no text.
+        static char CharacterOf(Word.Range range) =>
+            range.Start == range.End ? '\r' : string.IsNullOrEmpty(range.Text) ? '\0' : range.Text[0];
+
+        static PlaceholderOperationResult ModifyEach(Word.Document document, string undoEntryName, bool untracked, IReadOnlyCollection<PlaceholderControl> placeholders,
             IProgress<ProgressInfo> progress, CancellationToken token, Action<PlaceholderControl> modify)
         {
             ProgressTracker tracker = new ProgressTracker(placeholders.Count, progress);
-            using (WordEditScope.Begin(document, undoEntryName))
+            using (WordEditScope.Begin(document, undoEntryName, untracked))
             {
                 foreach (PlaceholderControl placeholder in placeholders)
                 {

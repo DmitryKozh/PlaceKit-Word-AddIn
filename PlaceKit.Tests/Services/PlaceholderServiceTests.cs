@@ -204,13 +204,13 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
-        public void Clear_KeepsValuesAndRestoresMarkersOfEmptyPlaceholders()
+        public void Finalize_KeepsValuesAndRestoresMarkersOfEmptyPlaceholders()
         {
             Word.Document document = SampleDocument();
             Create(document);
             Update(document, ("Client name", "John\r\nSmith"), ("Order", "42"));
 
-            PlaceholderOperationResult result = _service.ClearPlaceholders(document, PlaceholderPattern.Default, _progress, CancellationToken.None);
+            PlaceholderOperationResult result = Finalize(document, EmptyPlaceholderAction.KeepMarkers);
 
             Assert.AreEqual(12, result.Processed);
             Assert.AreEqual(0, WordInstance.PlaceKitControls(document).Count);
@@ -223,15 +223,99 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
-        public void Clear_IsOneUndoEntry()
+        public void Finalize_IsOneUndoEntry()
         {
             Word.Document document = SampleDocument();
             Create(document);
-            _service.ClearPlaceholders(document, PlaceholderPattern.Default, _progress, CancellationToken.None);
+            Finalize(document, EmptyPlaceholderAction.Delete);
 
             document.Undo(1);
 
             Assert.AreEqual(12, WordInstance.PlaceKitControls(document).Count);
+        }
+
+        [TestMethod]
+        public void Finalize_DeletesEmptyPlaceholdersAndTheSpaceLeftBehind()
+        {
+            Word.Document document = WordInstance.NewDocument("Dear {{Name}}, order {{Order}} ships {{When}} today. Total: {{Sum}} EUR{{Tail}}.");
+            Create(document);
+            Update(document, ("Order", "42"));
+
+            PlaceholderOperationResult result = Finalize(document, EmptyPlaceholderAction.Delete);
+
+            Assert.AreEqual(5, result.Processed);
+            Assert.AreEqual(0, WordInstance.PlaceKitControls(document).Count);
+            Assert.AreEqual("Dear, order 42 ships today. Total: EUR.\r", document.Content.Text);
+        }
+
+        [TestMethod]
+        public void Finalize_DeletesInEveryStory()
+        {
+            Word.Document document = SampleDocument();
+            Create(document);
+
+            Finalize(document, EmptyPlaceholderAction.Delete);
+
+            Word.Section section = document.Sections[1];
+            StringAssert.StartsWith(document.Content.Text, "Dear, order ships on.\rAgain. Adjacent.\r");
+            Assert.AreEqual("Header\r", section.Headers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text);
+            Assert.AreEqual("Footer\r", section.Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text);
+            Assert.AreEqual("Box", document.Shapes[1].TextFrame.TextRange.Text.TrimEnd('\r'));
+        }
+
+        // Values written by Fill are tracked for the reviewers; creating and finalizing are not, since a tracked edit
+        // keeps the old text as a deleted revision and a control would never become empty.
+        [TestMethod]
+        public void TrackChanges_OnlyFillIsTracked()
+        {
+            Word.Document document = WordInstance.NewDocument("Dear {{Name}}, order {{Order}}.");
+            document.TrackRevisions = true;
+
+            Create(document);
+            Assert.AreEqual(0, document.Revisions.Count, "creating is not tracked");
+            Assert.IsTrue(WordInstance.PlaceKitControls(document).All(control => control.ShowingPlaceholderText));
+
+            document.TrackRevisions = false;
+            Update(document, ("Order", "41"));
+            document.TrackRevisions = true;
+            Update(document, ("Order", "42"));
+            Assert.IsTrue(document.Revisions.Count >= 2, "41 deleted and 42 inserted, both tracked");
+            Assert.AreEqual("42", Value(document, "Order"), "read without the deleted 41");
+
+            Finalize(document, EmptyPlaceholderAction.Delete);
+            Assert.AreEqual(0, WordInstance.PlaceKitControls(document).Count);
+            Assert.IsTrue(document.Revisions.Count >= 2, "the tracked value stays for the reviewers");
+            Assert.IsTrue(document.TrackRevisions, "on again");
+        }
+
+        [TestMethod]
+        public void TrackChanges_AValueDeletedWhileTrackedIsEmpty()
+        {
+            Word.Document document = WordInstance.NewDocument("Order {{Order}}.");
+            Create(document);
+            Update(document, ("Order", "41"));
+            document.TrackRevisions = true;
+
+            Update(document, ("Order", ""));
+
+            Assert.AreEqual("", Value(document, "Order"));
+            CollectionAssert.AreEqual(new[] { "Order" }, _service.GetEmptyPlaceholders(document, _progress, CancellationToken.None).ToList());
+            Finalize(document, EmptyPlaceholderAction.KeepMarkers);
+            Assert.AreEqual("Order {{Order}}.\r", document.Content.Text);
+        }
+
+        [TestMethod]
+        public void GetEmptyPlaceholders_ListsEachEmptyOccurrence()
+        {
+            Word.Document document = SampleDocument();
+            Create(document);
+            Update(document, ("Order", "42"), ("Date", ""));
+
+            IReadOnlyList<string> empty = _service.GetEmptyPlaceholders(document, _progress, CancellationToken.None);
+
+            Assert.AreEqual(11, empty.Count, "all but Order");
+            Assert.AreEqual(3, empty.Count(name => name == "Client name"), "twice in the text, once in the footer");
+            CollectionAssert.DoesNotContain(empty.ToList(), "Order");
         }
 
         // Markers in the body, a table, the header, the footer and a text box, plus three invalid ones.
@@ -261,6 +345,12 @@ namespace PlaceKit.Tests.Services
 
         PlaceholderOperationResult Update(Word.Document document, params (string Name, string Value)[] values) =>
             _service.UpdatePlaceholders(document, values.ToDictionary(v => v.Name, v => v.Value), _progress, CancellationToken.None);
+
+        PlaceholderOperationResult Finalize(Word.Document document, EmptyPlaceholderAction emptyPlaceholders) =>
+            _service.FinalizePlaceholders(document, PlaceholderPattern.Default, emptyPlaceholders, _progress, CancellationToken.None);
+
+        string Value(Word.Document document, string name) =>
+            _service.GetPlaceholders(document, _progress, CancellationToken.None).Single(placeholder => placeholder.Name == name).Value;
 
         static Word.ContentControl Control(Word.Document document, string title) =>
             WordInstance.PlaceKitControls(document).First(control => control.Title == title);

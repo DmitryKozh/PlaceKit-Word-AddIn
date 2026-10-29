@@ -11,7 +11,8 @@ namespace PlaceKit.ViewModels
             : base("About " + product.Name)
         {
             Product = product;
-            OpenWebsiteCommand = new RelayCommand(() => urlLauncher.Open(product.Website));
+            OpenWebsiteCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.Website, "about")));
+            ContactCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.ContactPage, "about")));
             CloseCommand = new RelayCommand(() => Close(true));
         }
 
@@ -21,7 +22,12 @@ namespace PlaceKit.ViewModels
 
         public string WebsiteText => Product.Website.Host;
 
+        public string Introduction =>
+            $"PlaceKit is a sample of my work. I'm {Product.Developer}, a C# and .NET developer with 11 years of experience, and I take the boring jobs off your desk.";
+
         public ICommand OpenWebsiteCommand { get; }
+
+        public ICommand ContactCommand { get; }
 
         public ICommand CloseCommand { get; }
     }

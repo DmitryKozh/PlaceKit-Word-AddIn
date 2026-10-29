@@ -196,14 +196,59 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
-        public void Cancel_KeepsTheWindowOpenWhenTheUserSaysNo()
+        public void Close_KeepsTheEditorOpenWhenTheUserSaysNo()
         {
             _editor.AttachTo(EditorPlacement.Window);
             _editor.Items[0].Value = "John";
 
-            _editor.CancelCommand.Execute(null);
+            _editor.CloseCommand.Execute(null);
 
             Assert.AreEqual(0, _closes.Count);
+        }
+
+        [TestMethod]
+        public void Close_ClosesTheSidePanelToo()
+        {
+            _editor.AttachTo(EditorPlacement.SidePanel);
+
+            _editor.CloseCommand.Execute(null);
+
+            CollectionAssert.AreEqual(new bool?[] { false }, _closes);
+            Assert.IsFalse(_editor.FinalizeRequested);
+        }
+
+        [TestMethod]
+        public void SaveAndFinalize_WritesTheChangesAndLeavesTheRestToTheHost()
+        {
+            _editor.AttachTo(EditorPlacement.SidePanel);
+            _editor.Items[0].Value = "John";
+
+            _editor.SaveAndFinalizeCommand.Execute(null);
+
+            Assert.AreEqual("John", _document.Saves.Single()["Client name"]);
+            Assert.IsTrue(_editor.FinalizeRequested);
+            CollectionAssert.AreEqual(new bool?[] { true }, _closes);
+
+            _editor.AttachTo(EditorPlacement.SidePanel);
+            Assert.IsFalse(_editor.FinalizeRequested, "cleared when the host shows the editor again");
+        }
+
+        [TestMethod]
+        public void SaveAndFinalize_WithoutChangesSavesNothing()
+        {
+            _editor.SaveAndFinalizeCommand.Execute(null);
+
+            Assert.AreEqual(0, _document.Saves.Count);
+            Assert.IsTrue(_editor.FinalizeRequested);
+        }
+
+        [TestMethod]
+        public void SaveAndFinalize_NeedsPlaceholders()
+        {
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile);
+            editor.Reload();
+
+            Assert.IsFalse(editor.SaveAndFinalizeCommand.CanExecute(null));
         }
 
         [TestMethod]

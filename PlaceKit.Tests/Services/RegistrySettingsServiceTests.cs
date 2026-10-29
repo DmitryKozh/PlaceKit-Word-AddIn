@@ -35,6 +35,8 @@ namespace PlaceKit.Tests.Services
             Assert.IsTrue(settings.ShowCreateSummary);
             Assert.IsFalse(settings.OpenEditorAfterCreate);
             Assert.AreEqual(EditorPlacement.SidePanel, settings.EditorPlacement);
+            Assert.IsTrue(settings.AskAboutEmptyPlaceholders);
+            Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, settings.EmptyPlaceholderAction);
         }
 
         [TestMethod]
@@ -47,6 +49,8 @@ namespace PlaceKit.Tests.Services
                 ShowCreateSummary = false,
                 OpenEditorAfterCreate = true,
                 EditorPlacement = EditorPlacement.Window,
+                AskAboutEmptyPlaceholders = false,
+                EmptyPlaceholderAction = EmptyPlaceholderAction.Delete,
             });
 
             PlaceKitSettings loaded = _store.Load();
@@ -56,6 +60,8 @@ namespace PlaceKit.Tests.Services
             Assert.IsFalse(loaded.ShowCreateSummary);
             Assert.IsTrue(loaded.OpenEditorAfterCreate);
             Assert.AreEqual(EditorPlacement.Window, loaded.EditorPlacement);
+            Assert.IsFalse(loaded.AskAboutEmptyPlaceholders);
+            Assert.AreEqual(EmptyPlaceholderAction.Delete, loaded.EmptyPlaceholderAction);
         }
 
         [TestMethod]
@@ -78,6 +84,7 @@ namespace PlaceKit.Tests.Services
                 key.SetValue("ClosingMarker", "", RegistryValueKind.String);
                 key.SetValue("ShowCreateSummary", "yes", RegistryValueKind.String);
                 key.SetValue("EditorPlacement", "7");
+                key.SetValue("EmptyPlaceholderAction", "Shred");
             }
 
             PlaceKitSettings settings = _store.Load();
@@ -86,6 +93,7 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual("}}", settings.ClosingMarker);
             Assert.IsTrue(settings.ShowCreateSummary);
             Assert.AreEqual(EditorPlacement.SidePanel, settings.EditorPlacement);
+            Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, settings.EmptyPlaceholderAction);
         }
 
         [TestMethod]

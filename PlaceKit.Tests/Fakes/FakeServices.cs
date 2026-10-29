@@ -24,6 +24,8 @@ namespace PlaceKit.Tests.Fakes
             ShowCreateSummary = Current.ShowCreateSummary,
             OpenEditorAfterCreate = Current.OpenEditorAfterCreate,
             EditorPlacement = Current.EditorPlacement,
+            AskAboutEmptyPlaceholders = Current.AskAboutEmptyPlaceholders,
+            EmptyPlaceholderAction = Current.EmptyPlaceholderAction,
         };
 
         public void Save(PlaceKitSettings settings) => Saved = settings;
@@ -76,5 +78,31 @@ namespace PlaceKit.Tests.Fakes
         public List<Uri> Opened { get; } = new List<Uri>();
 
         public void Open(Uri url) => Opened.Add(url);
+    }
+
+    sealed class FakeEditors : IEditorService
+    {
+        public int Refreshes { get; private set; }
+
+        public void Open(Word.Document document)
+        {
+        }
+
+        public void Refresh(Word.Document document) => Refreshes++;
+
+        public void FinalizeDocument(Word.Document document)
+        {
+        }
+    }
+
+    sealed class FakeGuide : IGuideService
+    {
+        public List<PlaceholderPattern> Patterns { get; } = new List<PlaceholderPattern>();
+
+        public Word.Document CreateGuide(PlaceholderPattern pattern)
+        {
+            Patterns.Add(pattern);
+            return null;
+        }
     }
 }

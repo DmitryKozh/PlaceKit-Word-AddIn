@@ -38,19 +38,24 @@
             this.grpPlaceholders = this.Factory.CreateRibbonGroup();
             this.btnCreate = this.Factory.CreateRibbonButton();
             this.btnFill = this.Factory.CreateRibbonButton();
-            this.btnClear = this.Factory.CreateRibbonButton();
+            this.btnFinalize = this.Factory.CreateRibbonButton();
             this.grpGeneral = this.Factory.CreateRibbonGroup();
+            this.btnGuide = this.Factory.CreateRibbonButton();
             this.btnSettings = this.Factory.CreateRibbonButton();
             this.btnAbout = this.Factory.CreateRibbonButton();
+            this.grpBoringJob = this.Factory.CreateRibbonGroup();
+            this.btnHire = this.Factory.CreateRibbonButton();
             this.tabPlaceKit.SuspendLayout();
             this.grpPlaceholders.SuspendLayout();
             this.grpGeneral.SuspendLayout();
+            this.grpBoringJob.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabPlaceKit
             // 
             this.tabPlaceKit.Groups.Add(this.grpPlaceholders);
             this.tabPlaceKit.Groups.Add(this.grpGeneral);
+            this.tabPlaceKit.Groups.Add(this.grpBoringJob);
             this.tabPlaceKit.Label = "PlaceKit";
             this.tabPlaceKit.Name = "tabPlaceKit";
             // 
@@ -58,7 +63,7 @@
             // 
             this.grpPlaceholders.Items.Add(this.btnCreate);
             this.grpPlaceholders.Items.Add(this.btnFill);
-            this.grpPlaceholders.Items.Add(this.btnClear);
+            this.grpPlaceholders.Items.Add(this.btnFinalize);
             this.grpPlaceholders.Label = "Placeholders";
             this.grpPlaceholders.Name = "grpPlaceholders";
             // 
@@ -67,7 +72,6 @@
             this.btnCreate.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.btnCreate.Label = "Create";
             this.btnCreate.Name = "btnCreate";
-            this.btnCreate.OfficeImageId = "ContentControlText";
             this.btnCreate.ScreenTip = "Create placeholders";
             this.btnCreate.ShowImage = true;
             this.btnCreate.SuperTip = "Turn every {{text}} marker in the document into a content control that you can fi" +
@@ -79,38 +83,47 @@
             this.btnFill.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.btnFill.Label = "Fill";
             this.btnFill.Name = "btnFill";
-            this.btnFill.OfficeImageId = "EditDocument";
             this.btnFill.ScreenTip = "Fill placeholders";
             this.btnFill.ShowImage = true;
             this.btnFill.SuperTip = "Open the editor to find, review and fill in all placeholders of the document in o" +
     "ne place. It opens in the side panel or in a separate window, as chosen in Settings.";
             this.btnFill.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnFill_Click);
             // 
-            // btnClear
+            // btnFinalize
             // 
-            this.btnClear.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
-            this.btnClear.Label = "Clear";
-            this.btnClear.Name = "btnClear";
-            this.btnClear.OfficeImageId = "ClearFormatting";
-            this.btnClear.ScreenTip = "Clear placeholders";
-            this.btnClear.ShowImage = true;
-            this.btnClear.SuperTip = "Convert all placeholders back to regular text. Placeholders that were not filled " +
-    "in become markers again.";
-            this.btnClear.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnClear_Click);
+            this.btnFinalize.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnFinalize.Label = "Finalize";
+            this.btnFinalize.Name = "btnFinalize";
+            this.btnFinalize.ScreenTip = "Finalize the document";
+            this.btnFinalize.ShowImage = true;
+            this.btnFinalize.SuperTip = "Turn the placeholders into regular text when the document is ready. For placeholders tha" +
+    "t are not filled in, you choose: turn them back into markers or delete them.";
+            this.btnFinalize.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnFinalize_Click);
             // 
             // grpGeneral
             // 
+            this.grpGeneral.Items.Add(this.btnGuide);
             this.grpGeneral.Items.Add(this.btnSettings);
             this.grpGeneral.Items.Add(this.btnAbout);
             this.grpGeneral.Label = "General";
             this.grpGeneral.Name = "grpGeneral";
+            // 
+            // btnGuide
+            // 
+            this.btnGuide.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnGuide.Label = "Guide";
+            this.btnGuide.Name = "btnGuide";
+            this.btnGuide.ScreenTip = "Try PlaceKit";
+            this.btnGuide.ShowImage = true;
+            this.btnGuide.SuperTip = "Open a sample warranty claim with the steps to try: create the placeholders, fill them in and finalize the d" +
+    "ocument.";
+            this.btnGuide.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnGuide_Click);
             // 
             // btnSettings
             // 
             this.btnSettings.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.btnSettings.Label = "Settings";
             this.btnSettings.Name = "btnSettings";
-            this.btnSettings.OfficeImageId = "PropertySheet";
             this.btnSettings.ScreenTip = "Settings";
             this.btnSettings.ShowImage = true;
             this.btnSettings.SuperTip = "Change the placeholder markers and what happens after placeholders are created.";
@@ -121,11 +134,29 @@
             this.btnAbout.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
             this.btnAbout.Label = "About";
             this.btnAbout.Name = "btnAbout";
-            this.btnAbout.OfficeImageId = "Info";
             this.btnAbout.ScreenTip = "About PlaceKit";
             this.btnAbout.ShowImage = true;
             this.btnAbout.SuperTip = "Version, developer and website.";
             this.btnAbout.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnAbout_Click);
+            // 
+            // grpBoringJob
+            // 
+            this.grpBoringJob.Items.Add(this.btnHire);
+            this.grpBoringJob.Label = "BoringJob";
+            this.grpBoringJob.Name = "grpBoringJob";
+            // 
+            // btnHire
+            // 
+            this.btnHire.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnHire.Label = "Need a .NET Developer?";
+            this.btnHire.Name = "btnHire";
+            this.btnHire.ScreenTip = "C# and .NET development for your business";
+            this.btnHire.ShowImage = true;
+            this.btnHire.SuperTip = "PlaceKit is made by Dzmitry Kazhamiakin, a C# and .NET developer with 11 years of experience: WPF and desk" +
+    "top business software, REST APIs and integrations, AI integration, Office add-ins, Excel and VBA automation, SQL" +
+    " Server and reporting. Opens boringjob.work, where you can describe your problem; the initial assessment is free" +
+    ".";
+            this.btnHire.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnHire_Click);
             // 
             // PlaceKitRibbon
             // 
@@ -138,6 +169,8 @@
             this.grpPlaceholders.PerformLayout();
             this.grpGeneral.ResumeLayout(false);
             this.grpGeneral.PerformLayout();
+            this.grpBoringJob.ResumeLayout(false);
+            this.grpBoringJob.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -148,10 +181,13 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpPlaceholders;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnCreate;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnFill;
-        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnClear;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnFinalize;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpGeneral;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnGuide;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnSettings;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnAbout;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpBoringJob;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnHire;
     }
 
     partial class ThisRibbonCollection

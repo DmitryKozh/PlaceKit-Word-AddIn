@@ -56,9 +56,32 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void EmptyPlaceholderAction_OnlyMattersWithoutTheQuestion()
+        {
+            var settings = new SettingsViewModel(_store);
+            Assert.IsFalse(settings.CanChooseEmptyPlaceholderAction);
+            Assert.IsTrue(settings.KeepEmptyPlaceholdersAsMarkers);
+
+            settings.AskAboutEmptyPlaceholders = false;
+            settings.DeleteEmptyPlaceholders = true;
+            settings.KeepEmptyPlaceholdersAsMarkers = false;
+
+            Assert.IsTrue(settings.CanChooseEmptyPlaceholderAction);
+            Assert.AreEqual(EmptyPlaceholderAction.Delete, settings.EmptyPlaceholderAction);
+        }
+
+        [TestMethod]
         public void Save_StoresTheSettingsAndCloses()
         {
-            var settings = new SettingsViewModel(_store) { OpeningMarker = "<<", ClosingMarker = ">>", ShowCreateSummary = false, OpenInWindow = true };
+            var settings = new SettingsViewModel(_store)
+            {
+                OpeningMarker = "<<",
+                ClosingMarker = ">>",
+                ShowCreateSummary = false,
+                OpenInWindow = true,
+                AskAboutEmptyPlaceholders = false,
+                DeleteEmptyPlaceholders = true,
+            };
             bool? closedWith = null;
             settings.CloseRequested += (sender, e) => closedWith = e.DialogResult;
 
@@ -68,6 +91,8 @@ namespace PlaceKit.Tests.ViewModels
             Assert.AreEqual("<<", _store.Saved.OpeningMarker);
             Assert.IsFalse(_store.Saved.ShowCreateSummary);
             Assert.AreEqual(EditorPlacement.Window, _store.Saved.EditorPlacement);
+            Assert.IsFalse(_store.Saved.AskAboutEmptyPlaceholders);
+            Assert.AreEqual(EmptyPlaceholderAction.Delete, _store.Saved.EmptyPlaceholderAction);
         }
 
         [TestMethod]

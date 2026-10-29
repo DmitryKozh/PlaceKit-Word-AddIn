@@ -46,5 +46,7 @@ namespace PlaceKit.Services
                 }
             }
         }
+
+        public Word.Document NewDocument() => _application().Documents.Add();
     }
 }

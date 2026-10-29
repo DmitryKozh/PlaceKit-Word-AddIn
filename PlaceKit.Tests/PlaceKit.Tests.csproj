@@ -19,12 +19,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PlaceKit\PlaceKit.csproj" />
+    <ProjectReference Include="..\PlaceKit.IconRenderer\PlaceKit.IconRenderer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>

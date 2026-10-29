@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
 using PlaceKit.Tests.Fakes;
@@ -34,6 +36,36 @@ namespace PlaceKit.Tests.ViewModels
             Assert.AreEqual(false, answer);
         }
 
+        [DataTestMethod]
+        [DataRow(new[] { "Date" }, "1 placeholder is not filled in", "Date")]
+        [DataRow(new[] { "A", "B", "A" }, "2 placeholders are not filled in", "A, B")]
+        [DataRow(new[] { "A", "B", "C", "D", "E", "F" }, "6 placeholders are not filled in", "A, B, C, D and 2\u00A0more")]
+        public void EmptyPlaceholders_NamesEachOnce(string[] empty, string headline, string names)
+        {
+            var question = new EmptyPlaceholdersViewModel(empty, new PlaceholderPattern("[[", "]]"));
+
+            Assert.AreEqual(headline, question.Headline);
+            Assert.AreEqual(names, question.NamesText);
+            StringAssert.Contains(question.QuestionText, "such as [[" + empty[0] + "]]");
+        }
+
+        [TestMethod]
+        public void EmptyPlaceholders_ClosesWithTheChoice()
+        {
+            var question = new EmptyPlaceholdersViewModel(new[] { "Date" }, PlaceholderPattern.Default);
+            var closes = new List<bool?>();
+            question.CloseRequested += (sender, e) => closes.Add(e.DialogResult);
+
+            question.DeleteCommand.Execute(null);
+            Assert.AreEqual(EmptyPlaceholderAction.Delete, question.Choice);
+
+            question.KeepMarkersCommand.Execute(null);
+            Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, question.Choice);
+
+            question.CancelCommand.Execute(null);
+            CollectionAssert.AreEqual(new bool?[] { true, true, false }, closes);
+        }
+
         [TestMethod]
         public void Message_ButtonsDependOnTheKind()
         {
@@ -47,16 +79,24 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void About_ShowsTheProductAndOpensTheWebsite()
         {
-            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"));
+            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"));
             var launcher = new FakeUrlLauncher();
             var about = new AboutViewModel(product, launcher);
 
             about.OpenWebsiteCommand.Execute(null);
+            about.ContactCommand.Execute(null);
 
             Assert.AreEqual("About PlaceKit", about.Title);
             Assert.AreEqual("Version 1.2.3", about.VersionText);
             Assert.AreEqual("boringjob.work", about.WebsiteText);
-            Assert.AreEqual(product.Website, launcher.Opened[0]);
+            StringAssert.Contains(about.Introduction, "I'm Developer, a C# and .NET developer");
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "https://boringjob.work/?utm_source=placekit&utm_medium=add-in&utm_content=about",
+                    "https://boringjob.work/contact/?utm_source=placekit&utm_medium=add-in&utm_content=about",
+                },
+                launcher.Opened.Select(url => url.AbsoluteUri).ToList());
         }
 
         [TestMethod]
@@ -67,6 +107,7 @@ namespace PlaceKit.Tests.ViewModels
             Assert.AreEqual("PlaceKit", product.Name);
             Assert.AreEqual("Dzmitry Kazhamiakin", product.Developer);
             Assert.AreEqual(new Uri("https://boringjob.work"), product.Website);
+            Assert.AreEqual(new Uri("https://boringjob.work/contact/"), product.ContactPage);
         }
     }
 }

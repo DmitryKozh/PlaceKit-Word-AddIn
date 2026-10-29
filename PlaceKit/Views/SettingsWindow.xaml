@@ -89,16 +89,31 @@
                       IsEnabled="{Binding CanChooseAutoOpen}" />
 
             <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="Open the editor in" />
-            <RadioButton Content="Side _panel next to the document" GroupName="EditorPlacement" IsChecked="{Binding OpenInSidePanel}" />
-            <RadioButton Margin="0,10,0,0"
-                         Content="Separate _window"
-                         GroupName="EditorPlacement"
-                         IsChecked="{Binding OpenInWindow}" />
-            <TextBlock Margin="24,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="The button in the editor's top-left corner moves it between the two." />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="Side _panel next to the document" GroupName="EditorPlacement" IsChecked="{Binding OpenInSidePanel}" />
+                <RadioButton Margin="24,0,0,0"
+                             Content="Separate _window"
+                             GroupName="EditorPlacement"
+                             IsChecked="{Binding OpenInWindow}" />
+            </StackPanel>
+            <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="The button in the editor's top-left corner moves it between the two." />
+
+            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="When finalizing" />
+            <CheckBox Content="_Ask what to do with placeholders that are not filled in" IsChecked="{Binding AskAboutEmptyPlaceholders}" />
+            <StackPanel Margin="24,10,0,0" Orientation="Horizontal">
+                <RadioButton Content="Turn them back into _markers"
+                             GroupName="EmptyPlaceholders"
+                             IsChecked="{Binding KeepEmptyPlaceholdersAsMarkers}"
+                             IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
+                <RadioButton Margin="24,0,0,0"
+                             Content="_Delete them from the text"
+                             GroupName="EmptyPlaceholders"
+                             IsChecked="{Binding DeleteEmptyPlaceholders}"
+                             IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
+            </StackPanel>
 
             <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}">
-                <Run Text="Settings are stored in the registry:" />
-                <LineBreak />
+                <Run Text="Stored in" />
                 <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding StorageLocation, Mode=OneWay}" />
             </TextBlock>
         </StackPanel>

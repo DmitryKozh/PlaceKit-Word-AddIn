@@ -17,6 +17,7 @@ using System.Security;
 
 [assembly: AssemblyMetadata("Developer", "Dzmitry Kazhamiakin")]
 [assembly: AssemblyMetadata("Website", "https://boringjob.work")]
+[assembly: AssemblyMetadata("ContactPage", "https://boringjob.work/contact/")]
 [assembly: InternalsVisibleTo("PlaceKit.Tests")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

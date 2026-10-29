@@ -18,6 +18,12 @@ namespace PlaceKit.Tests.Tools
         }
 
         [TestMethod]
+        public void Canceled_SaysWhatWasDoneAndHowToUndoIt()
+        {
+            Assert.AreEqual("The operation was canceled. Placeholders created so far: 3. Press Ctrl+Z in Word to undo them.", TextFormat.Canceled(3, "created"));
+        }
+
+        [TestMethod]
         public void RunAndReportErrors_ShowsTheError()
         {
             var dialogs = new FakeDialogs();

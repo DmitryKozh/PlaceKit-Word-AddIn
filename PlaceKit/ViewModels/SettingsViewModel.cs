@@ -49,6 +49,24 @@ namespace PlaceKit.ViewModels
             set => SetPlacement(value, EditorPlacement.Window);
         }
 
+        public bool AskAboutEmptyPlaceholders { get; set; }
+
+        public bool CanChooseEmptyPlaceholderAction => !AskAboutEmptyPlaceholders;
+
+        public EmptyPlaceholderAction EmptyPlaceholderAction { get; set; }
+
+        public bool KeepEmptyPlaceholdersAsMarkers
+        {
+            get => EmptyPlaceholderAction == EmptyPlaceholderAction.KeepMarkers;
+            set => SetEmptyPlaceholderAction(value, EmptyPlaceholderAction.KeepMarkers);
+        }
+
+        public bool DeleteEmptyPlaceholders
+        {
+            get => EmptyPlaceholderAction == EmptyPlaceholderAction.Delete;
+            set => SetEmptyPlaceholderAction(value, EmptyPlaceholderAction.Delete);
+        }
+
         public bool IsValid =>
             PlaceholderPattern.ValidateMarker(OpeningMarker) == null && PlaceholderPattern.ValidateMarker(ClosingMarker) == null;
 
@@ -87,6 +105,8 @@ namespace PlaceKit.ViewModels
             ShowCreateSummary = settings.ShowCreateSummary;
             OpenEditorAfterCreate = settings.OpenEditorAfterCreate;
             EditorPlacement = settings.EditorPlacement;
+            AskAboutEmptyPlaceholders = settings.AskAboutEmptyPlaceholders;
+            EmptyPlaceholderAction = settings.EmptyPlaceholderAction;
         }
 
         void SetPlacement(bool isChecked, EditorPlacement placement)
@@ -94,6 +114,14 @@ namespace PlaceKit.ViewModels
             if (isChecked)
             {
                 EditorPlacement = placement;
+            }
+        }
+
+        void SetEmptyPlaceholderAction(bool isChecked, EmptyPlaceholderAction action)
+        {
+            if (isChecked)
+            {
+                EmptyPlaceholderAction = action;
             }
         }
 
@@ -106,6 +134,8 @@ namespace PlaceKit.ViewModels
                 ShowCreateSummary = ShowCreateSummary,
                 OpenEditorAfterCreate = OpenEditorAfterCreate,
                 EditorPlacement = EditorPlacement,
+                AskAboutEmptyPlaceholders = AskAboutEmptyPlaceholders,
+                EmptyPlaceholderAction = EmptyPlaceholderAction,
             });
             Close(true);
         }

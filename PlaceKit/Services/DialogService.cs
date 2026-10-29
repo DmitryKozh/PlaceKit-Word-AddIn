@@ -18,6 +18,7 @@ namespace PlaceKit.Services
         {
             [typeof(MessageViewModel)] = () => new MessageWindow(),
             [typeof(CreateSummaryViewModel)] = () => new CreateSummaryWindow(),
+            [typeof(EmptyPlaceholdersViewModel)] = () => new EmptyPlaceholdersWindow(),
             [typeof(EditorViewModel)] = () => new EditorWindow(),
             [typeof(SettingsViewModel)] = () => new SettingsWindow(),
             [typeof(AboutViewModel)] = () => new AboutWindow(),

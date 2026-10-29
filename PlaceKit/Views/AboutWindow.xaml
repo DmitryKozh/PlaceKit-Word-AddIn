@@ -3,11 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:vm="clr-namespace:PlaceKit.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:AboutViewModel}"
         Title="{Binding Title}"
-        Width="420"
+        Width="460"
         WindowStartupLocation="CenterOwner"
         Style="{DynamicResource DialogWindowStyle}">
     <Window.Resources>
@@ -54,35 +55,58 @@
 
             <Border Height="1" Margin="0,24" Background="{StaticResource DividerBrush}" />
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <Border Padding="16"
+                    Background="{StaticResource AccentSubtleBrush}"
+                    CornerRadius="4">
+                <StackPanel>
+                    <TextBlock FontWeight="SemiBold" Text="Need a .NET developer?" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="{Binding Introduction}"
+                               TextWrapping="Wrap" />
+                    <ItemsControl Margin="0,12,0,-6" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource TagStyle}">
+                                    <TextBlock Text="{Binding}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <sys:String>C#</sys:String>
+                        <sys:String>.NET</sys:String>
+                        <sys:String>WPF</sys:String>
+                        <sys:String>REST APIs</sys:String>
+                        <sys:String>AI integration</sys:String>
+                        <sys:String>SQL Server</sys:String>
+                        <sys:String>VSTO add-ins</sys:String>
+                        <sys:String>Excel and VBA</sys:String>
+                    </ItemsControl>
+                    <WrapPanel Margin="0,12,0,0">
+                        <Button Margin="0,0,8,0"
+                                Command="{Binding ContactCommand}"
+                                Content="Describe your problem"
+                                Style="{StaticResource LinkButtonStyle}"
+                                ToolTip="{Binding Product.ContactPage}" />
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="The initial assessment is free." />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
-                <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Developer" />
-                <TextBlock Grid.Column="2" Text="{Binding Product.Developer}" />
-
-                <TextBlock Grid.Row="2" Style="{StaticResource SecondaryTextStyle}" Text="Website" />
-                <Button Grid.Row="2"
-                        Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        Command="{Binding OpenWebsiteCommand}"
+            <StackPanel Margin="0,24,0,0"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        TextElement.FontSize="12">
+                <TextBlock Style="{StaticResource CaptionTextStyle}" Text="{Binding Product.Copyright}" />
+                <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
+                <Button Command="{Binding OpenWebsiteCommand}"
                         Content="{Binding WebsiteText}"
                         Style="{StaticResource LinkButtonStyle}"
                         ToolTip="{Binding Product.Website}" />
-            </Grid>
-
-            <TextBlock Margin="0,24,0,0"
-                       HorizontalAlignment="Center"
-                       Style="{StaticResource CaptionTextStyle}"
-                       Text="{Binding Product.Copyright}" />
+            </StackPanel>
         </StackPanel>
     </DockPanel>
 </Window>

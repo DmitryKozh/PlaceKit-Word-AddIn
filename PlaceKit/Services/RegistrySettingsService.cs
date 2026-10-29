@@ -13,6 +13,8 @@ namespace PlaceKit.Services
         const string ShowCreateSummaryValue = "ShowCreateSummary";
         const string OpenEditorAfterCreateValue = "OpenEditorAfterCreate";
         const string EditorPlacementValue = "EditorPlacement";
+        const string AskAboutEmptyPlaceholdersValue = "AskAboutEmptyPlaceholders";
+        const string EmptyPlaceholderActionValue = "EmptyPlaceholderAction";
 
         readonly string _keyPath;
 
@@ -43,6 +45,8 @@ namespace PlaceKit.Services
                 settings.ShowCreateSummary = ReadFlag(key, ShowCreateSummaryValue, settings.ShowCreateSummary);
                 settings.OpenEditorAfterCreate = ReadFlag(key, OpenEditorAfterCreateValue, settings.OpenEditorAfterCreate);
                 settings.EditorPlacement = ReadEnum(key, EditorPlacementValue, settings.EditorPlacement);
+                settings.AskAboutEmptyPlaceholders = ReadFlag(key, AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders);
+                settings.EmptyPlaceholderAction = ReadEnum(key, EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction);
             }
 
             return settings;
@@ -57,6 +61,8 @@ namespace PlaceKit.Services
                 key.SetValue(ShowCreateSummaryValue, settings.ShowCreateSummary ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue(OpenEditorAfterCreateValue, settings.OpenEditorAfterCreate ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue(EditorPlacementValue, settings.EditorPlacement.ToString(), RegistryValueKind.String);
+                key.SetValue(AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders ? 1 : 0, RegistryValueKind.DWord);
+                key.SetValue(EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction.ToString(), RegistryValueKind.String);
             }
         }
 

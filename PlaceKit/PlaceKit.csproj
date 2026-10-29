@@ -223,6 +223,8 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <!-- drawn by PlaceKit.IconRenderer -->
+    <EmbeddedResource Include="Resources\RibbonIcons\*.png" />
     <EmbeddedResource Include="PlaceKitRibbon.resx">
       <DependentUpon>PlaceKitRibbon.cs</DependentUpon>
     </EmbeddedResource>
@@ -257,6 +259,7 @@
     <Compile Include="CompositionRoot.cs" />
     <Compile Include="Interfaces\IDialogService.cs" />
     <Compile Include="Interfaces\IEditorService.cs" />
+    <Compile Include="Interfaces\IGuideService.cs" />
     <Compile Include="Interfaces\IPlaceholderDocument.cs" />
     <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\IPlaceholderValuesFile.cs" />
@@ -266,6 +269,7 @@
     <Compile Include="Interfaces\IUrlLauncher.cs" />
     <Compile Include="Interfaces\IWordHost.cs" />
     <Compile Include="Models\EditorPlacement.cs" />
+    <Compile Include="Models\EmptyPlaceholderAction.cs" />
     <Compile Include="Models\MessageKind.cs" />
     <Compile Include="Models\PlaceholderInfo.cs" />
     <Compile Include="Models\PlaceholderOperationResult.cs" />
@@ -276,6 +280,7 @@
     <Compile Include="Models\ProgressInfo.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\EditorService.cs" />
+    <Compile Include="Services\GuideService.cs" />
     <Compile Include="Services\PlaceholderDocument.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\PlaceholderValuesFile.cs" />
@@ -288,6 +293,7 @@
     <Compile Include="Services\WordHost.cs" />
     <Compile Include="Tools\DialogServiceExtensions.cs" />
     <Compile Include="Tools\NativeMethods.cs" />
+    <Compile Include="Tools\OfficeTheme.cs" />
     <Compile Include="Tools\RelayCommand.cs" />
     <Compile Include="Tools\TextFormat.cs" />
     <Compile Include="Tools\WindowPlacement.cs" />
@@ -299,6 +305,7 @@
     <Compile Include="ViewModels\DialogCloseRequestedEventArgs.cs" />
     <Compile Include="ViewModels\DialogViewModelBase.cs" />
     <Compile Include="ViewModels\EditorViewModel.cs" />
+    <Compile Include="ViewModels\EmptyPlaceholdersViewModel.cs" />
     <Compile Include="ViewModels\MessageViewModel.cs" />
     <Compile Include="ViewModels\PlaceholderItemViewModel.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
@@ -320,12 +327,17 @@
     <Compile Include="Views\EditorWindow.xaml.cs">
       <DependentUpon>EditorWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\EmptyPlaceholdersWindow.xaml.cs">
+      <DependentUpon>EmptyPlaceholdersWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\MessageWindow.xaml.cs">
       <DependentUpon>MessageWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ProgressWindow.xaml.cs">
       <DependentUpon>ProgressWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\RibbonIcon.cs" />
+    <Compile Include="Views\RibbonImages.cs" />
     <Compile Include="Views\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
@@ -342,6 +354,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\EditorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\EmptyPlaceholdersWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

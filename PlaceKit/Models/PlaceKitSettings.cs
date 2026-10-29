@@ -12,6 +12,10 @@ namespace PlaceKit.Models
 
         public EditorPlacement EditorPlacement { get; set; } = EditorPlacement.SidePanel;
 
+        public bool AskAboutEmptyPlaceholders { get; set; } = true;
+
+        public EmptyPlaceholderAction EmptyPlaceholderAction { get; set; } = EmptyPlaceholderAction.KeepMarkers;
+
         public PlaceholderPattern CreatePattern() => new PlaceholderPattern(OpeningMarker, ClosingMarker);
     }
 }

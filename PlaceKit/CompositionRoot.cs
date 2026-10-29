@@ -25,6 +25,7 @@ namespace PlaceKit
             services.AddSingleton<IUrlLauncher, UrlLauncher>();
             services.AddSingleton<IEditorService, EditorService>();
             services.AddSingleton<IPlaceholderValuesFile, PlaceholderValuesFile>();
+            services.AddSingleton<IGuideService, GuideService>();
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();

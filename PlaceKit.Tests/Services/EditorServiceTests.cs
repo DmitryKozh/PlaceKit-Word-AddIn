@@ -140,7 +140,7 @@ namespace PlaceKit.Tests.Services
         {
             _settings.Current.EditorPlacement = EditorPlacement.Window;
             Word.Document document = DocumentWithPlaceholders();
-            _dialogs.OnShowDialog = window => ((EditorViewModel)window).CancelCommand.Execute(null);
+            _dialogs.OnShowDialog = window => ((EditorViewModel)window).CloseCommand.Execute(null);
 
             _service.Open(document);
 

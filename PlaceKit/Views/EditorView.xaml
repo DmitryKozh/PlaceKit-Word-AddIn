@@ -125,23 +125,77 @@
 
     <DockPanel>
         <Border Padding="16,12" DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <StackPanel>
+                <TextBlock Margin="0,0,0,10" Style="{StaticResource SecondaryTextStyle}" Text="{Binding Summary}" />
+                <!-- One row on the right in the window. The side panel can be made narrow, so there
+                     Save and Close share the first row and Save and finalize takes the second. -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="HorizontalAlignment" Value="Right" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsInSidePanel}" Value="True">
+                                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
                     <Button Command="{Binding SaveCommand}"
                             Content="_Save"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            ToolTip="Write the changed values to the document" />
-                    <Button Margin="8,0,0,0"
-                            Command="{Binding CancelCommand}"
-                            Content="Cancel"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Visibility="{Binding IsInWindow, Converter={StaticResource BooleanToVisibility}}" />
-                </StackPanel>
-                <TextBlock Margin="0,0,12,3"
-                           VerticalAlignment="Center"
-                           Style="{StaticResource SecondaryTextStyle}"
-                           Text="{Binding Summary}" />
-            </DockPanel>
+                            ToolTip="Write the changed values to the document">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource PrimaryButtonStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsInSidePanel}" Value="True">
+                                        <Setter Property="Margin" Value="0,0,4,0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding SaveAndFinalizeCommand}"
+                            Content="Save and _finalize"
+                            ToolTip="Write the values, then turn the placeholders into regular text">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
+                                <Setter Property="Grid.Column" Value="1" />
+                                <Setter Property="Margin" Value="8,0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsInSidePanel}" Value="True">
+                                        <Setter Property="Grid.Row" Value="1" />
+                                        <Setter Property="Grid.Column" Value="0" />
+                                        <Setter Property="Grid.ColumnSpan" Value="3" />
+                                        <Setter Property="Margin" Value="0,8,0,0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Grid.Column="2"
+                            Command="{Binding CloseCommand}"
+                            Content="_Close">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsInSidePanel}" Value="True">
+                                        <Setter Property="Margin" Value="4,0,0,0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </StackPanel>
         </Border>
 
         <Grid Margin="16,16,16,4" DockPanel.Dock="Top">
