@@ -281,7 +281,7 @@ namespace PlaceKit.ViewModels
             int filled = FillIn(dialog.Values);
             if (filled == 0)
             {
-                _dialogs.ShowMessage(Caption, "Claude found no values for these placeholders in the text.", MessageKind.Information);
+                _dialogs.ShowMessage(Caption, "No values for these placeholders were found in the text.", MessageKind.Information);
                 return;
             }
 

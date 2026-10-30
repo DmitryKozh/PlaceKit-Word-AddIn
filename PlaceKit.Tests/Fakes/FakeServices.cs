@@ -108,19 +108,38 @@ namespace PlaceKit.Tests.Fakes
 
     sealed class MemoryApiKeyStore : IApiKeyStore
     {
-        public string Key { get; set; }
+        readonly Dictionary<AiProvider, string> _keys = new Dictionary<AiProvider, string>();
 
-        public bool HasKey => Key != null;
+        public string Claude
+        {
+            get => Load(AiProvider.Claude);
+            set => _keys[AiProvider.Claude] = value;
+        }
 
-        public string Load() => Key;
+        public string OpenAI
+        {
+            get => Load(AiProvider.OpenAI);
+            set => _keys[AiProvider.OpenAI] = value;
+        }
 
-        public void Save(string apiKey) => Key = apiKey;
+        public bool HasKey(AiProvider provider) => Load(provider) != null;
 
-        public void Delete() => Key = null;
+        public string Load(AiProvider provider) => _keys.TryGetValue(provider, out string key) ? key : null;
+
+        public void Save(AiProvider provider, string apiKey) => _keys[provider] = apiKey;
+
+        public void Delete(AiProvider provider) => _keys.Remove(provider);
     }
 
     sealed class FakeValueFinder : IValueFinder
     {
+        public FakeValueFinder(AiProvider provider = AiProvider.Claude)
+        {
+            Provider = provider;
+        }
+
+        public AiProvider Provider { get; }
+
         public Dictionary<string, string> Values { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
         public Exception Error { get; set; }

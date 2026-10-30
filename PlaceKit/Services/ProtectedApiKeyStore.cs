@@ -2,16 +2,15 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Win32;
 using PlaceKit.Interfaces;
+using PlaceKit.Models;
 
 namespace PlaceKit.Services
 {
-    // Next to the settings, encrypted with Windows DPAPI: only the same Windows account can read it back.
+    // Next to the settings, encrypted with Windows DPAPI: only the same Windows account can read them back.
+    // Values ClaudeApiKey and OpenAIApiKey.
     public sealed class ProtectedApiKeyStore : IApiKeyStore
     {
         const string DefaultKeyPath = @"Software\BoringJob\PlaceKit";
-        const string ApiKeyValue = "ClaudeApiKey";
-
-        static readonly byte[] Entropy = Encoding.UTF8.GetBytes("PlaceKit Claude API key");
 
         readonly string _keyPath;
 
@@ -25,20 +24,20 @@ namespace PlaceKit.Services
             _keyPath = keyPath;
         }
 
-        public bool HasKey => Load() != null;
+        public bool HasKey(AiProvider provider) => Load(provider) != null;
 
-        public string Load()
+        public string Load(AiProvider provider)
         {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(_keyPath))
             {
-                if (!(key?.GetValue(ApiKeyValue) is byte[] data))
+                if (!(key?.GetValue(ValueName(provider)) is byte[] data))
                 {
                     return null;
                 }
 
                 try
                 {
-                    return Encoding.UTF8.GetString(ProtectedData.Unprotect(data, Entropy, DataProtectionScope.CurrentUser));
+                    return Encoding.UTF8.GetString(ProtectedData.Unprotect(data, Entropy(provider), DataProtectionScope.CurrentUser));
                 }
                 catch (CryptographicException)
                 {
@@ -48,21 +47,26 @@ namespace PlaceKit.Services
             }
         }
 
-        public void Save(string apiKey)
+        public void Save(AiProvider provider, string apiKey)
         {
-            byte[] data = ProtectedData.Protect(Encoding.UTF8.GetBytes(apiKey), Entropy, DataProtectionScope.CurrentUser);
+            byte[] data = ProtectedData.Protect(Encoding.UTF8.GetBytes(apiKey), Entropy(provider), DataProtectionScope.CurrentUser);
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(_keyPath))
             {
-                key.SetValue(ApiKeyValue, data, RegistryValueKind.Binary);
+                key.SetValue(ValueName(provider), data, RegistryValueKind.Binary);
             }
         }
 
-        public void Delete()
+        public void Delete(AiProvider provider)
         {
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(_keyPath, writable: true))
             {
-                key?.DeleteValue(ApiKeyValue, throwOnMissingValue: false);
+                key?.DeleteValue(ValueName(provider), throwOnMissingValue: false);
             }
         }
+
+        static string ValueName(AiProvider provider) => provider + "ApiKey";
+
+        // Each key decrypts only as the key of its own service.
+        static byte[] Entropy(AiProvider provider) => Encoding.UTF8.GetBytes($"PlaceKit {provider} API key");
     }
 }

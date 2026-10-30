@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32;
+using PlaceKit.Models;
 using PlaceKit.Services;
 
 namespace PlaceKit.Tests.Services
@@ -29,34 +30,60 @@ namespace PlaceKit.Tests.Services
         [TestMethod]
         public void Load_ReturnsNullWhenNoKeyIsSaved()
         {
-            Assert.IsNull(_store.Load());
-            Assert.IsFalse(_store.HasKey);
+            Assert.IsNull(_store.Load(AiProvider.Claude));
+            Assert.IsFalse(_store.HasKey(AiProvider.OpenAI));
         }
 
-        [TestMethod]
-        public void Save_StoresTheKeyEncrypted()
+        [DataTestMethod]
+        [DataRow(AiProvider.Claude, "ClaudeApiKey")]
+        [DataRow(AiProvider.OpenAI, "OpenAIApiKey")]
+        public void Save_StoresTheKeyEncrypted(AiProvider provider, string valueName)
         {
-            _store.Save(TestApiKey);
+            _store.Save(provider, TestApiKey);
 
-            Assert.AreEqual(TestApiKey, _store.Load());
-            Assert.IsTrue(_store.HasKey);
+            Assert.AreEqual(TestApiKey, _store.Load(provider));
+            Assert.IsTrue(_store.HasKey(provider));
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(_keyPath))
             {
-                byte[] data = (byte[])key.GetValue("ClaudeApiKey");
+                byte[] data = (byte[])key.GetValue(valueName);
                 Assert.IsFalse(Encoding.UTF8.GetString(data).Contains(TestApiKey));
                 Assert.IsFalse(Encoding.Unicode.GetString(data).Contains(TestApiKey));
             }
         }
 
         [TestMethod]
+        public void Keys_AreKeptPerService()
+        {
+            _store.Save(AiProvider.Claude, "claude key");
+            _store.Save(AiProvider.OpenAI, "openai key");
+
+            _store.Delete(AiProvider.Claude);
+
+            Assert.IsNull(_store.Load(AiProvider.Claude));
+            Assert.AreEqual("openai key", _store.Load(AiProvider.OpenAI));
+        }
+
+        [TestMethod]
+        public void Load_DoesNotDecryptAKeyAsAnotherServicesKey()
+        {
+            _store.Save(AiProvider.Claude, TestApiKey);
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(_keyPath, writable: true))
+            {
+                key.SetValue("OpenAIApiKey", key.GetValue("ClaudeApiKey"), RegistryValueKind.Binary);
+            }
+
+            Assert.IsNull(_store.Load(AiProvider.OpenAI));
+        }
+
+        [TestMethod]
         public void Delete_RemovesTheKey()
         {
-            _store.Save(TestApiKey);
+            _store.Save(AiProvider.Claude, TestApiKey);
 
-            _store.Delete();
-            _store.Delete();
+            _store.Delete(AiProvider.Claude);
+            _store.Delete(AiProvider.Claude);
 
-            Assert.IsNull(_store.Load());
+            Assert.IsNull(_store.Load(AiProvider.Claude));
         }
 
         [TestMethod]
@@ -67,8 +94,8 @@ namespace PlaceKit.Tests.Services
                 key.SetValue("ClaudeApiKey", new byte[] { 1, 2, 3 }, RegistryValueKind.Binary);
             }
 
-            Assert.IsNull(_store.Load());
-            Assert.IsFalse(_store.HasKey);
+            Assert.IsNull(_store.Load(AiProvider.Claude));
+            Assert.IsFalse(_store.HasKey(AiProvider.Claude));
         }
     }
 }

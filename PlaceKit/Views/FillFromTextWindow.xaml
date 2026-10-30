@@ -50,7 +50,16 @@
                        Text="{Binding Error}"
                        Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibility}}" />
 
-            <Label Margin="0,16,0,0" Content="Claude API _key" Target="{Binding ElementName=ApiKeyBox}" />
+            <TextBlock Margin="0,16,0,4" Text="Find the values with" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="_Claude by Anthropic" GroupName="Service" IsChecked="{Binding UseClaude}" />
+                <RadioButton Margin="24,0,0,0"
+                             Content="Chat_GPT by OpenAI"
+                             GroupName="Service"
+                             IsChecked="{Binding UseOpenAI}" />
+            </StackPanel>
+
+            <Label Margin="0,16,0,0" Content="{Binding ApiKeyLabel}" Target="{Binding ElementName=ApiKeyBox}" />
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
@@ -67,10 +76,12 @@
             </Grid>
             <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}">
                 <Run Text="Saved encrypted for your Windows account." />
-                <Hyperlink Command="{Binding OpenApiKeysPageCommand}" Foreground="{StaticResource AccentBrush}">Get a key in the Claude Console</Hyperlink>
+                <Hyperlink Command="{Binding OpenApiKeysPageCommand}" Foreground="{StaticResource AccentBrush}">
+                    <Run Text="{Binding ApiKeysPageText, Mode=OneWay}" />
+                </Hyperlink>
             </TextBlock>
 
-            <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}" Text="The text and the placeholder names are sent to Anthropic and processed with your API key. Nothing is written to the document until you save." />
+            <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding PrivacyNote}" />
         </StackPanel>
     </DockPanel>
 </Window>

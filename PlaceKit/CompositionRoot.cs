@@ -29,13 +29,14 @@ namespace PlaceKit
             services.AddSingleton<IGuideService, GuideService>();
             services.AddSingleton<IApiKeyStore, ProtectedApiKeyStore>();
             services.AddSingleton<IValueFinder, ClaudeValueFinder>();
+            services.AddSingleton<IValueFinder, OpenAIValueFinder>();
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<AboutViewModel>();
             services.AddSingleton<Func<IReadOnlyList<string>, FillFromTextViewModel>>(provider => names => new FillFromTextViewModel(
                 names,
-                provider.GetRequiredService<IValueFinder>(),
+                provider.GetServices<IValueFinder>(),
                 provider.GetRequiredService<IApiKeyStore>(),
                 provider.GetRequiredService<IUrlLauncher>(),
                 provider.GetRequiredService<IDialogService>()));

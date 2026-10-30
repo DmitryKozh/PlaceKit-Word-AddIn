@@ -16,10 +16,10 @@
     <!-- same versions as the add-in, so the test runner's older dependencies don't win -->
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.14" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.11" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <!-- the tests read the JSON schema of the Claude request -->
-    <PackageReference Include="System.Text.Json" Version="10.0.6" />
+    <PackageReference Include="System.Text.Json" Version="10.0.9" />
   </ItemGroup>
 
   <ItemGroup>

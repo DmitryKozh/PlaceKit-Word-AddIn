@@ -1,15 +1,17 @@
+using PlaceKit.Models;
+
 namespace PlaceKit.Interfaces
 {
-    // The user's Claude API key. It is a secret, so it is kept apart from the settings.
+    // The user's API keys, one per service. They are secrets, so they are kept apart from the settings.
     public interface IApiKeyStore
     {
-        bool HasKey { get; }
+        bool HasKey(AiProvider provider);
 
         // null when no key is saved, or when it was saved by another Windows account.
-        string Load();
+        string Load(AiProvider provider);
 
-        void Save(string apiKey);
+        void Save(AiProvider provider, string apiKey);
 
-        void Delete();
+        void Delete(AiProvider provider);
     }
 }

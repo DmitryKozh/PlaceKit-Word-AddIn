@@ -5,20 +5,19 @@ using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
 using PlaceKit.Services;
-using PlaceKit.Tests.Fakes;
 
 namespace PlaceKit.Tests.Services
 {
-    // The request and the reading of the answer; nothing here calls Claude.
+    // The request and the reading of the answer; nothing here calls a service.
     [TestClass]
-    public class ClaudeValueFinderTests
+    public class ValueRequestTests
     {
         static readonly string[] Names = { "Client name", "Order", "Date" };
 
         [TestMethod]
         public void ParseValues_ReadsTheValuesOfTheAskedNames()
         {
-            IReadOnlyDictionary<string, string> values = ClaudeValueFinder.ParseValues(
+            IReadOnlyDictionary<string, string> values = ValueRequest.ParseValues(
                 "{\"values\":[{\"name\":\"Client name\",\"value\":\" Contoso \"},{\"name\":\"Date\",\"value\":\"12 November 2026\"}]}", Names);
 
             Assert.AreEqual(2, values.Count);
@@ -29,7 +28,7 @@ namespace PlaceKit.Tests.Services
         [TestMethod]
         public void ParseValues_LeavesOutOtherNamesEmptyValuesAndRepeats()
         {
-            IReadOnlyDictionary<string, string> values = ClaudeValueFinder.ParseValues(
+            IReadOnlyDictionary<string, string> values = ValueRequest.ParseValues(
                 "{\"values\":[" +
                 "{\"name\":\"Unknown\",\"value\":\"x\"}," +
                 "{\"name\":\"client name\",\"value\":\"wrong case\"}," +
@@ -44,7 +43,7 @@ namespace PlaceKit.Tests.Services
         [TestMethod]
         public void ParseValues_KeepsLineBreaks()
         {
-            IReadOnlyDictionary<string, string> values = ClaudeValueFinder.ParseValues(
+            IReadOnlyDictionary<string, string> values = ValueRequest.ParseValues(
                 "{\"values\":[{\"name\":\"Client name\",\"value\":\"Contoso\\nMain Street 1\"}]}", Names);
 
             Assert.AreEqual("Contoso\nMain Street 1", values["Client name"]);
@@ -57,15 +56,15 @@ namespace PlaceKit.Tests.Services
         [DataRow("{\"values\":[{\"value\":\"x\"}]}")]
         public void ParseValues_RejectsAnAnswerOfAnotherShape(string json)
         {
-            ValueFinderException error = Assert.ThrowsException<ValueFinderException>(() => ClaudeValueFinder.ParseValues(json, Names));
+            ValueFinderException error = Assert.ThrowsException<ValueFinderException>(() => ValueRequest.ParseValues(json, Names));
 
-            Assert.AreEqual("Claude's answer could not be read. Try again.", error.Message);
+            Assert.AreEqual("The answer could not be read. Try again.", error.Message);
         }
 
         [TestMethod]
         public void Schema_AllowsOnlyTheGivenNames()
         {
-            using (JsonDocument schema = JsonDocument.Parse(JsonSerializer.Serialize(ClaudeValueFinder.CreateSchema(Names))))
+            using (JsonDocument schema = JsonDocument.Parse(JsonSerializer.Serialize(ValueRequest.CreateSchema(Names))))
             {
                 JsonElement root = schema.RootElement;
                 JsonElement item = root.GetProperty("properties").GetProperty("values").GetProperty("items");
@@ -81,7 +80,7 @@ namespace PlaceKit.Tests.Services
         [TestMethod]
         public void Prompt_HoldsTheNamesAndTheText()
         {
-            string prompt = ClaudeValueFinder.CreatePrompt("Hello,\nthe order is 42.", Names);
+            string prompt = ValueRequest.CreatePrompt("Hello,\nthe order is 42.", Names);
 
             Assert.AreEqual(
                 "<placeholders>" + Environment.NewLine +
@@ -94,15 +93,6 @@ namespace PlaceKit.Tests.Services
                 "Hello,\nthe order is 42." + Environment.NewLine +
                 "</text>",
                 prompt);
-        }
-
-        [TestMethod]
-        public void FindValues_NeedsAnApiKey()
-        {
-            var finder = new ClaudeValueFinder(new MemoryApiKeyStore(), new InlineProgress());
-
-            ValueFinderException error = Assert.ThrowsException<ValueFinderException>(() => finder.FindValues("text", Names));
-            Assert.AreEqual("Add your Claude API key first.", error.Message);
         }
     }
 }

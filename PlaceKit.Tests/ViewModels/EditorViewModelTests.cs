@@ -15,7 +15,7 @@ namespace PlaceKit.Tests.ViewModels
         readonly FakeDialogs _dialogs = new FakeDialogs();
         readonly FakeValuesFile _valuesFile = new FakeValuesFile();
         readonly FakeValueFinder _finder = new FakeValueFinder();
-        readonly MemoryApiKeyStore _apiKeys = new MemoryApiKeyStore { Key = "test key" };
+        readonly MemoryApiKeyStore _apiKeys = new MemoryApiKeyStore { Claude = "test key" };
         readonly List<bool?> _closes = new List<bool?>();
         FakeDocument _document;
         EditorViewModel _editor;
@@ -367,7 +367,7 @@ namespace PlaceKit.Tests.ViewModels
             _editor.FillFromTextCommand.Execute(null);
 
             Assert.AreEqual(0, _editor.ModifiedCount);
-            CollectionAssert.AreEqual(new[] { "Claude found no values for these placeholders in the text." }, _dialogs.Messages);
+            CollectionAssert.AreEqual(new[] { "No values for these placeholders were found in the text." }, _dialogs.Messages);
         }
 
         [TestMethod]
@@ -384,7 +384,7 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         FillFromTextViewModel CreateFillFromText(IReadOnlyList<string> names) =>
-            new FillFromTextViewModel(names, _finder, _apiKeys, new FakeUrlLauncher(), _dialogs);
+            new FillFromTextViewModel(names, new[] { _finder }, _apiKeys, new FakeUrlLauncher(), _dialogs);
 
         // What the user does in the Fill from text dialog: paste the text and click Find values.
         static Action<DialogViewModelBase> FindValuesIn(string text) => viewModel =>
