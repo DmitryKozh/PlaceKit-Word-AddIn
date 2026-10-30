@@ -105,4 +105,43 @@ namespace PlaceKit.Tests.Fakes
             return null;
         }
     }
+
+    sealed class MemoryApiKeyStore : IApiKeyStore
+    {
+        public string Key { get; set; }
+
+        public bool HasKey => Key != null;
+
+        public string Load() => Key;
+
+        public void Save(string apiKey) => Key = apiKey;
+
+        public void Delete() => Key = null;
+    }
+
+    sealed class FakeValueFinder : IValueFinder
+    {
+        public Dictionary<string, string> Values { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        public Exception Error { get; set; }
+
+        public int Calls { get; private set; }
+
+        public string LastText { get; private set; }
+
+        public IReadOnlyList<string> LastNames { get; private set; }
+
+        public IReadOnlyDictionary<string, string> FindValues(string text, IReadOnlyList<string> names)
+        {
+            Calls++;
+            LastText = text;
+            LastNames = names;
+            if (Error != null)
+            {
+                throw Error;
+            }
+
+            return Values;
+        }
+    }
 }

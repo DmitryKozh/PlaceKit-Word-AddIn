@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,8 @@ namespace PlaceKit.Tests.ViewModels
     {
         readonly FakeDialogs _dialogs = new FakeDialogs();
         readonly FakeValuesFile _valuesFile = new FakeValuesFile();
+        readonly FakeValueFinder _finder = new FakeValueFinder();
+        readonly MemoryApiKeyStore _apiKeys = new MemoryApiKeyStore { Key = "test key" };
         readonly List<bool?> _closes = new List<bool?>();
         FakeDocument _document;
         EditorViewModel _editor;
@@ -24,7 +27,7 @@ namespace PlaceKit.Tests.ViewModels
                 new PlaceholderInfo("Client name", "", 2, false),
                 new PlaceholderInfo("Order", "42", 1, false),
                 new PlaceholderInfo("Date", "", 1, false));
-            _editor = new EditorViewModel(_document, _dialogs, _valuesFile);
+            _editor = new EditorViewModel(_document, _dialogs, _valuesFile, CreateFillFromText);
             _editor.CloseRequested += (sender, e) => _closes.Add(e.DialogResult);
             _editor.Reload();
         }
@@ -32,7 +35,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void BeforeLoading_IsEmpty()
         {
-            var editor = new EditorViewModel(_document, _dialogs, _valuesFile);
+            var editor = new EditorViewModel(_document, _dialogs, _valuesFile, CreateFillFromText);
 
             Assert.IsTrue(editor.IsEmpty);
             Assert.IsFalse(editor.HasNoMatches);
@@ -245,7 +248,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void SaveAndFinalize_NeedsPlaceholders()
         {
-            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile);
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, CreateFillFromText);
             editor.Reload();
 
             Assert.IsFalse(editor.SaveAndFinalizeCommand.CanExecute(null));
@@ -330,16 +333,71 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void Import_NeedsPlaceholders()
         {
-            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile);
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, CreateFillFromText);
             editor.Reload();
 
             Assert.IsFalse(editor.ImportCommand.CanExecute(null));
+            Assert.IsFalse(editor.FillFromTextCommand.CanExecute(null));
         }
+
+        [TestMethod]
+        public void FillFromText_FillsTheFoundValuesAsUnsavedChanges()
+        {
+            _finder.Values["Client name"] = "Contoso";
+            _finder.Values["Date"] = "12 November";
+            _dialogs.OnShowDialog = FindValuesIn("Contoso orders on 12 November.");
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            CollectionAssert.AreEqual(new[] { "Client name", "Order", "Date" }, _finder.LastNames.ToList());
+            Assert.AreEqual("Contoso", _editor.Items[0].Value);
+            Assert.AreEqual("42", _editor.Items[1].Value, "not in the text, so not touched");
+            Assert.AreEqual("12 November", _editor.Items[2].Value);
+            Assert.AreEqual(2, _editor.ModifiedCount);
+            Assert.AreEqual(0, _document.Saves.Count, "nothing is written until the user saves");
+            StringAssert.StartsWith(_dialogs.Messages.Single(), "Filled in 2 placeholders from the text.");
+            StringAssert.EndsWith(_dialogs.Messages.Single(), "The text gave no value for 1 placeholder.");
+        }
+
+        [TestMethod]
+        public void FillFromText_ReportsWhenNothingIsFound()
+        {
+            _dialogs.OnShowDialog = FindValuesIn("Hello");
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            Assert.AreEqual(0, _editor.ModifiedCount);
+            CollectionAssert.AreEqual(new[] { "Claude found no values for these placeholders in the text." }, _dialogs.Messages);
+        }
+
+        [TestMethod]
+        public void FillFromText_CanceledChangesNothing()
+        {
+            _finder.Values["Client name"] = "Contoso";
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            Assert.AreEqual(1, _dialogs.Shown.Count);
+            Assert.AreEqual(0, _finder.Calls);
+            Assert.AreEqual(0, _editor.ModifiedCount);
+            Assert.AreEqual(0, _dialogs.Messages.Count);
+        }
+
+        FillFromTextViewModel CreateFillFromText(IReadOnlyList<string> names) =>
+            new FillFromTextViewModel(names, _finder, _apiKeys, new FakeUrlLauncher(), _dialogs);
+
+        // What the user does in the Fill from text dialog: paste the text and click Find values.
+        static Action<DialogViewModelBase> FindValuesIn(string text) => viewModel =>
+        {
+            var dialog = (FillFromTextViewModel)viewModel;
+            dialog.Text = text;
+            dialog.FindCommand.Execute(null);
+        };
 
         [TestMethod]
         public void CommandErrors_AreReportedNotThrown()
         {
-            var editor = new EditorViewModel(new FailingDocument(), _dialogs, _valuesFile);
+            var editor = new EditorViewModel(new FailingDocument(), _dialogs, _valuesFile, CreateFillFromText);
 
             editor.RefreshCommand.Execute(null);
 

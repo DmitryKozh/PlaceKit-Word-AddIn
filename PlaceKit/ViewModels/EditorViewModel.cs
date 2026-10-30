@@ -19,13 +19,16 @@ namespace PlaceKit.ViewModels
         readonly IPlaceholderDocument _document;
         readonly IDialogService _dialogs;
         readonly IPlaceholderValuesFile _valuesFile;
+        readonly Func<IReadOnlyList<string>, FillFromTextViewModel> _createFillFromText;
 
-        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs, IPlaceholderValuesFile valuesFile)
+        // createFillFromText: the Fill from text dialog for these placeholder names.
+        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs, IPlaceholderValuesFile valuesFile, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
             : base("Fill placeholders")
         {
             _document = document;
             _dialogs = dialogs;
             _valuesFile = valuesFile;
+            _createFillFromText = createFillFromText;
             SetItems(Enumerable.Empty<PlaceholderItemViewModel>());
 
             LocateCommand = new RelayCommand<PlaceholderItemViewModel>(item => _dialogs.RunAndReportErrors(() => Locate(item)), item => item != null);
@@ -36,6 +39,7 @@ namespace PlaceKit.ViewModels
             RefreshCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Reload));
             MoveCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Move));
             ImportCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Import), () => !IsEmpty);
+            FillFromTextCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(FillFromText), () => !IsEmpty);
             ExportCommand = new RelayCommand(() => _dialogs.RunAndReportErrors(Export), () => Items.Any(HasValue));
         }
 
@@ -103,6 +107,8 @@ namespace PlaceKit.ViewModels
         public ICommand MoveCommand { get; }
 
         public ICommand ImportCommand { get; }
+
+        public ICommand FillFromTextCommand { get; }
 
         public ICommand ExportCommand { get; }
 
@@ -246,16 +252,7 @@ namespace PlaceKit.ViewModels
                 return;
             }
 
-            int filled = 0;
-            foreach (PlaceholderItemViewModel item in Items)
-            {
-                if (values.TryGetValue(item.Name, out string value))
-                {
-                    item.Value = value;
-                    filled++;
-                }
-            }
-
+            int filled = FillIn(values);
             if (filled == 0)
             {
                 _dialogs.ShowMessage(Caption, $"None of the names in {Path.GetFileName(path)} match a placeholder in this document.", MessageKind.Information);
@@ -270,6 +267,47 @@ namespace PlaceKit.ViewModels
             }
 
             _dialogs.ShowMessage(Caption, message, MessageKind.Information);
+        }
+
+        // Like Import, the values found only fill in the editor; the user checks them and saves.
+        void FillFromText()
+        {
+            FillFromTextViewModel dialog = _createFillFromText(Items.Select(item => item.Name).ToList());
+            if (_dialogs.ShowDialog(dialog) != true)
+            {
+                return;
+            }
+
+            int filled = FillIn(dialog.Values);
+            if (filled == 0)
+            {
+                _dialogs.ShowMessage(Caption, "Claude found no values for these placeholders in the text.", MessageKind.Information);
+                return;
+            }
+
+            string message = $"Filled in {TextFormat.Quantity(filled, "placeholder")} from the text. Check the values and click Save to write them to the document.";
+            int missing = Items.Count - filled;
+            if (missing > 0)
+            {
+                message += $" The text gave no value for {TextFormat.Quantity(missing, "placeholder")}.";
+            }
+
+            _dialogs.ShowMessage(Caption, message, MessageKind.Information);
+        }
+
+        int FillIn(IReadOnlyDictionary<string, string> values)
+        {
+            int filled = 0;
+            foreach (PlaceholderItemViewModel item in Items)
+            {
+                if (values.TryGetValue(item.Name, out string value))
+                {
+                    item.Value = value;
+                    filled++;
+                }
+            }
+
+            return filled;
         }
 
         // Exports what the editor shows, unsaved edits included. Empty placeholders are left out,

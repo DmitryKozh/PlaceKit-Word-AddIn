@@ -18,9 +18,10 @@ namespace PlaceKit.Services
         readonly ISettingsService _settings;
         readonly ITaskPaneService _panes;
         readonly IPlaceholderValuesFile _valuesFile;
+        readonly Func<IReadOnlyList<string>, FillFromTextViewModel> _createFillFromText;
         readonly Dictionary<EditorViewModel, Word.Document> _documents = new Dictionary<EditorViewModel, Word.Document>();
 
-        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes, IPlaceholderValuesFile valuesFile)
+        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes, IPlaceholderValuesFile valuesFile, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
         {
             _placeholders = placeholders;
             _progress = progress;
@@ -28,6 +29,7 @@ namespace PlaceKit.Services
             _settings = settings;
             _panes = panes;
             _valuesFile = valuesFile;
+            _createFillFromText = createFillFromText;
         }
 
         public void Open(Word.Document document)
@@ -44,7 +46,7 @@ namespace PlaceKit.Services
             }
 
             PlaceKitSettings settings = _settings.Load();
-            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs, _valuesFile);
+            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs, _valuesFile, _createFillFromText);
             editor.Reload();
             if (editor.IsEmpty)
             {

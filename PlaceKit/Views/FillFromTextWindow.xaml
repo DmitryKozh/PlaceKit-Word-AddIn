@@ -1,0 +1,76 @@
+<Window x:Class="PlaceKit.Views.FillFromTextWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tools="clr-namespace:PlaceKit.Tools"
+        xmlns:vm="clr-namespace:PlaceKit.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:FillFromTextViewModel}"
+        Title="{Binding Title}"
+        Width="560"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=SourceBox}"
+        Style="{DynamicResource DialogWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Command="{Binding FindCommand}"
+                        Content="_Find values"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButtonStyle}" />
+                <Button Margin="8,0,0,0"
+                        Command="{Binding CancelCommand}"
+                        Content="Cancel"
+                        Style="{StaticResource SecondaryButtonStyle}" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Margin="{StaticResource DialogPadding}">
+            <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="{Binding Intro}" />
+            <!-- Enter adds a line here; Find values is the default button for the rest of the window -->
+            <TextBox x:Name="SourceBox"
+                     Height="200"
+                     Margin="0,12,0,0"
+                     VerticalContentAlignment="Top"
+                     AcceptsReturn="True"
+                     AutomationProperties.Name="Text with the values"
+                     Tag="Paste the text here"
+                     Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto" />
+            <TextBlock Style="{StaticResource ErrorTextStyle}"
+                       Text="{Binding Error}"
+                       Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibility}}" />
+
+            <Label Margin="0,16,0,0" Content="Claude API _key" Target="{Binding ElementName=ApiKeyBox}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <PasswordBox x:Name="ApiKeyBox" Tag="{Binding ApiKeyHint}" tools:PasswordBoxBinding.Password="{Binding NewApiKey, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="1"
+                        Margin="8,0,0,0"
+                        Command="{Binding RemoveApiKeyCommand}"
+                        Content="_Remove"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        ToolTip="Delete the saved key from this computer"
+                        Visibility="{Binding HasSavedApiKey, Converter={StaticResource BooleanToVisibility}}" />
+            </Grid>
+            <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}">
+                <Run Text="Saved encrypted for your Windows account." />
+                <Hyperlink Command="{Binding OpenApiKeysPageCommand}" Foreground="{StaticResource AccentBrush}">Get a key in the Claude Console</Hyperlink>
+            </TextBlock>
+
+            <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}" Text="The text and the placeholder names are sent to Anthropic and processed with your API key. Nothing is written to the document until you save." />
+        </StackPanel>
+    </DockPanel>
+</Window>

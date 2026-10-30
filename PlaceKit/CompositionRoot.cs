@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Office.Tools;
 using PlaceKit.Interfaces;
@@ -26,10 +27,18 @@ namespace PlaceKit
             services.AddSingleton<IEditorService, EditorService>();
             services.AddSingleton<IPlaceholderValuesFile, PlaceholderValuesFile>();
             services.AddSingleton<IGuideService, GuideService>();
+            services.AddSingleton<IApiKeyStore, ProtectedApiKeyStore>();
+            services.AddSingleton<IValueFinder, ClaudeValueFinder>();
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<AboutViewModel>();
+            services.AddSingleton<Func<IReadOnlyList<string>, FillFromTextViewModel>>(provider => names => new FillFromTextViewModel(
+                names,
+                provider.GetRequiredService<IValueFinder>(),
+                provider.GetRequiredService<IApiKeyStore>(),
+                provider.GetRequiredService<IUrlLauncher>(),
+                provider.GetRequiredService<IDialogService>()));
 
             return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
         }

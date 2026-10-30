@@ -33,6 +33,11 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <BootstrapperComponentsLocation>HomeSite</BootstrapperComponentsLocation>
     <ResolveComReferenceSilent>true</ResolveComReferenceSilent>
+    <!-- The Anthropic SDK sets its request properties with init and required members. -->
+    <LangVersion>latest</LangVersion>
+    <!-- PlaceKit.dll.config: Word loads the add-in with it, and the package versions need its binding redirects. -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -104,8 +109,14 @@
   -->
   <ItemGroup>
     <Reference Include="Accessibility" />
+    <Reference Include="Anthropic, Version=13.3.0.0, Culture=neutral, PublicKeyToken=f8f088d62f9f3514, processorArchitecture=MSIL">
+      <HintPath>..\packages\Anthropic.13.3.0\lib\netstandard2.0\Anthropic.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.14, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.14\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.AI.Abstractions, Version=10.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.AI.Abstractions.10.5.1\lib\net462\Microsoft.Extensions.AI.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection, Version=10.0.0.14, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.10.0.14\lib\net462\Microsoft.Extensions.DependencyInjection.dll</HintPath>
@@ -120,10 +131,41 @@
       <HintPath>..\packages\PropertyChanged.Fody.4.1.0\lib\net40\PropertyChanged.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.8.0.0\lib\net462\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=8.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.8.0.1\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Pipelines, Version=10.0.0.6, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Pipelines.10.0.6\lib\net462\System.IO.Pipelines.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.6.3\lib\net462\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.ServerSentEvents, Version=10.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.ServerSentEvents.10.0.1\lib\net462\System.Net.ServerSentEvents.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security" />
+    <Reference Include="System.Text.Encodings.Web, Version=10.0.0.6, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encodings.Web.10.0.6\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=10.0.0.6, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.10.0.6\lib\net462\System.Text.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
@@ -257,6 +299,7 @@
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
     <Compile Include="CompositionRoot.cs" />
+    <Compile Include="Interfaces\IApiKeyStore.cs" />
     <Compile Include="Interfaces\IDialogService.cs" />
     <Compile Include="Interfaces\IEditorService.cs" />
     <Compile Include="Interfaces\IGuideService.cs" />
@@ -267,6 +310,7 @@
     <Compile Include="Interfaces\ISettingsService.cs" />
     <Compile Include="Interfaces\ITaskPaneService.cs" />
     <Compile Include="Interfaces\IUrlLauncher.cs" />
+    <Compile Include="Interfaces\IValueFinder.cs" />
     <Compile Include="Interfaces\IWordHost.cs" />
     <Compile Include="Models\EditorPlacement.cs" />
     <Compile Include="Models\EmptyPlaceholderAction.cs" />
@@ -278,6 +322,8 @@
     <Compile Include="Models\PlaceKitSettings.cs" />
     <Compile Include="Models\ProductInfo.cs" />
     <Compile Include="Models\ProgressInfo.cs" />
+    <Compile Include="Models\ValueFinderException.cs" />
+    <Compile Include="Services\ClaudeValueFinder.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\EditorService.cs" />
     <Compile Include="Services\GuideService.cs" />
@@ -287,6 +333,7 @@
     <Compile Include="Services\ProgressDialogHost.cs" />
     <Compile Include="Services\ProgressService.cs" />
     <Compile Include="Services\ProgressTracker.cs" />
+    <Compile Include="Services\ProtectedApiKeyStore.cs" />
     <Compile Include="Services\RegistrySettingsService.cs" />
     <Compile Include="Services\TaskPaneService.cs" />
     <Compile Include="Services\UrlLauncher.cs" />
@@ -294,6 +341,7 @@
     <Compile Include="Tools\DialogServiceExtensions.cs" />
     <Compile Include="Tools\NativeMethods.cs" />
     <Compile Include="Tools\OfficeTheme.cs" />
+    <Compile Include="Tools\PasswordBoxBinding.cs" />
     <Compile Include="Tools\RelayCommand.cs" />
     <Compile Include="Tools\TextFormat.cs" />
     <Compile Include="Tools\WindowPlacement.cs" />
@@ -306,6 +354,7 @@
     <Compile Include="ViewModels\DialogViewModelBase.cs" />
     <Compile Include="ViewModels\EditorViewModel.cs" />
     <Compile Include="ViewModels\EmptyPlaceholdersViewModel.cs" />
+    <Compile Include="ViewModels\FillFromTextViewModel.cs" />
     <Compile Include="ViewModels\MessageViewModel.cs" />
     <Compile Include="ViewModels\PlaceholderItemViewModel.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
@@ -329,6 +378,9 @@
     </Compile>
     <Compile Include="Views\EmptyPlaceholdersWindow.xaml.cs">
       <DependentUpon>EmptyPlaceholdersWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FillFromTextWindow.xaml.cs">
+      <DependentUpon>FillFromTextWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\MessageWindow.xaml.cs">
       <DependentUpon>MessageWindow.xaml</DependentUpon>
@@ -358,6 +410,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\EmptyPlaceholdersWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\FillFromTextWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

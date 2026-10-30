@@ -20,6 +20,7 @@ namespace PlaceKit.Services
             [typeof(CreateSummaryViewModel)] = () => new CreateSummaryWindow(),
             [typeof(EmptyPlaceholdersViewModel)] = () => new EmptyPlaceholdersWindow(),
             [typeof(EditorViewModel)] = () => new EditorWindow(),
+            [typeof(FillFromTextViewModel)] = () => new FillFromTextWindow(),
             [typeof(SettingsViewModel)] = () => new SettingsWindow(),
             [typeof(AboutViewModel)] = () => new AboutWindow(),
         };

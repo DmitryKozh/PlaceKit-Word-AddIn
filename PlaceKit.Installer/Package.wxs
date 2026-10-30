@@ -46,7 +46,7 @@
 
     <!-- One component: in a per-user package its key path must be in HKCU, not a file. -->
     <Component Id="AddIn" Directory="INSTALLFOLDER" Guid="69D1BC73-1E86-492A-BBE1-08EA19A27AB6">
-      <!-- PlaceKit.dll, its manifests and the assemblies the manifest names, written by the project at build time. -->
+      <!-- PlaceKit.dll, its manifests, PlaceKit.dll.config and the assemblies the manifest names, written by the project at build time. -->
       <?include Files.wxi?>
 
       <!-- Word loads the add-in from the install folder (vstolocal), not from a ClickOnce cache. -->

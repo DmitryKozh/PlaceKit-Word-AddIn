@@ -31,10 +31,14 @@
     </ParameterGroup>
     <Task>
       <Using Namespace="System.Xml.Linq" />
+      <!-- The assemblies to install, and the other files, such as PlaceKit.dll.config with the binding redirects. -->
       <Code Type="Fragment" Language="cs"><![CDATA[
-        Files = XDocument.Load(Manifest).Descendants()
+        var elements = XDocument.Load(Manifest).Descendants().ToList();
+        Files = elements
             .Where(element => element.Name.LocalName == "dependentAssembly" && (string)element.Attribute("dependencyType") == "install")
-            .Select(element => (ITaskItem)new TaskItem((string)element.Attribute("codebase")))
+            .Select(element => (string)element.Attribute("codebase"))
+            .Concat(elements.Where(element => element.Name.LocalName == "file").Select(element => (string)element.Attribute("name")))
+            .Select(path => (ITaskItem)new TaskItem(path))
             .ToArray();
       ]]></Code>
     </Task>
