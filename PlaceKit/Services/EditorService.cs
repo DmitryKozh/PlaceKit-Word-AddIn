@@ -18,10 +18,11 @@ namespace PlaceKit.Services
         readonly ISettingsService _settings;
         readonly ITaskPaneService _panes;
         readonly IPlaceholderValuesFile _valuesFile;
+        readonly IAiService _ai;
         readonly Func<IReadOnlyList<string>, FillFromTextViewModel> _createFillFromText;
         readonly Dictionary<EditorViewModel, Word.Document> _documents = new Dictionary<EditorViewModel, Word.Document>();
 
-        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes, IPlaceholderValuesFile valuesFile, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
+        public EditorService(IPlaceholderService placeholders, IProgressService progress, IDialogService dialogs, ISettingsService settings, ITaskPaneService panes, IPlaceholderValuesFile valuesFile, IAiService ai, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
         {
             _placeholders = placeholders;
             _progress = progress;
@@ -29,6 +30,7 @@ namespace PlaceKit.Services
             _settings = settings;
             _panes = panes;
             _valuesFile = valuesFile;
+            _ai = ai;
             _createFillFromText = createFillFromText;
         }
 
@@ -46,7 +48,7 @@ namespace PlaceKit.Services
             }
 
             PlaceKitSettings settings = _settings.Load();
-            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs, _valuesFile, _createFillFromText);
+            editor = new EditorViewModel(new PlaceholderDocument(document, _placeholders, _progress), _dialogs, _valuesFile, _ai, _createFillFromText);
             editor.Reload();
             if (editor.IsEmpty)
             {
@@ -152,7 +154,7 @@ namespace PlaceKit.Services
             }
             catch
             {
-                // The command reports the error. The request must not stay set, and a closed window must not leave its editor behind.
+                // The command reports the error; just clean up.
                 if (editor.IsInWindow)
                 {
                     End(editor);
@@ -171,7 +173,7 @@ namespace PlaceKit.Services
                 return;
             }
 
-            // Canceled: back to the editor, which shows the values it saved.
+            // Canceled: back to the editor.
             editor.Reload();
             if (editor.IsInWindow)
             {
@@ -183,7 +185,7 @@ namespace PlaceKit.Services
             }
         }
 
-        // False when the user cancels the check or the question about empty placeholders.
+        // false if the user cancels
         bool TryFinalize(Word.Document document)
         {
             PlaceKitSettings settings = _settings.Load();

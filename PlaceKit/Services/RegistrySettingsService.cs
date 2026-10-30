@@ -15,6 +15,7 @@ namespace PlaceKit.Services
         const string EditorPlacementValue = "EditorPlacement";
         const string AskAboutEmptyPlaceholdersValue = "AskAboutEmptyPlaceholders";
         const string EmptyPlaceholderActionValue = "EmptyPlaceholderAction";
+        const string AiProviderValue = "AiProvider";
 
         readonly string _keyPath;
 
@@ -47,6 +48,7 @@ namespace PlaceKit.Services
                 settings.EditorPlacement = ReadEnum(key, EditorPlacementValue, settings.EditorPlacement);
                 settings.AskAboutEmptyPlaceholders = ReadFlag(key, AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders);
                 settings.EmptyPlaceholderAction = ReadEnum(key, EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction);
+                settings.AiProvider = ReadEnum(key, AiProviderValue, settings.AiProvider);
             }
 
             return settings;
@@ -63,6 +65,7 @@ namespace PlaceKit.Services
                 key.SetValue(EditorPlacementValue, settings.EditorPlacement.ToString(), RegistryValueKind.String);
                 key.SetValue(AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue(EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction.ToString(), RegistryValueKind.String);
+                key.SetValue(AiProviderValue, settings.AiProvider.ToString(), RegistryValueKind.String);
             }
         }
 

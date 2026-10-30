@@ -28,17 +28,19 @@ namespace PlaceKit
             services.AddSingleton<IPlaceholderValuesFile, PlaceholderValuesFile>();
             services.AddSingleton<IGuideService, GuideService>();
             services.AddSingleton<IApiKeyStore, ProtectedApiKeyStore>();
-            services.AddSingleton<IValueFinder, ClaudeValueFinder>();
-            services.AddSingleton<IValueFinder, OpenAIValueFinder>();
+            services.AddSingleton<IAiClient, ClaudeClient>();
+            services.AddSingleton<IAiClient, OpenAIClient>();
+            services.AddSingleton<IAiService, AiService>();
+            services.AddSingleton<IValueFinder, ValueFinder>();
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<AboutViewModel>();
+            services.AddSingleton<Func<SettingsViewModel>>(provider => () => provider.GetRequiredService<SettingsViewModel>());
             services.AddSingleton<Func<IReadOnlyList<string>, FillFromTextViewModel>>(provider => names => new FillFromTextViewModel(
                 names,
-                provider.GetServices<IValueFinder>(),
-                provider.GetRequiredService<IApiKeyStore>(),
-                provider.GetRequiredService<IUrlLauncher>(),
+                provider.GetRequiredService<IValueFinder>(),
+                provider.GetRequiredService<IAiService>(),
                 provider.GetRequiredService<IDialogService>()));
 
             return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });

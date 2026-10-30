@@ -329,6 +329,8 @@
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
     <Compile Include="CompositionRoot.cs" />
+    <Compile Include="Interfaces\IAiClient.cs" />
+    <Compile Include="Interfaces\IAiService.cs" />
     <Compile Include="Interfaces\IApiKeyStore.cs" />
     <Compile Include="Interfaces\IDialogService.cs" />
     <Compile Include="Interfaces\IEditorService.cs" />
@@ -342,7 +344,10 @@
     <Compile Include="Interfaces\IUrlLauncher.cs" />
     <Compile Include="Interfaces\IValueFinder.cs" />
     <Compile Include="Interfaces\IWordHost.cs" />
+    <Compile Include="Models\AiEffort.cs" />
     <Compile Include="Models\AiProvider.cs" />
+    <Compile Include="Models\AiProviders.cs" />
+    <Compile Include="Models\AiRequest.cs" />
     <Compile Include="Models\EditorPlacement.cs" />
     <Compile Include="Models\EmptyPlaceholderAction.cs" />
     <Compile Include="Models\MessageKind.cs" />
@@ -353,12 +358,13 @@
     <Compile Include="Models\PlaceKitSettings.cs" />
     <Compile Include="Models\ProductInfo.cs" />
     <Compile Include="Models\ProgressInfo.cs" />
-    <Compile Include="Models\ValueFinderException.cs" />
-    <Compile Include="Services\ClaudeValueFinder.cs" />
+    <Compile Include="Models\AiServiceException.cs" />
+    <Compile Include="Services\AiService.cs" />
+    <Compile Include="Services\ClaudeClient.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\EditorService.cs" />
     <Compile Include="Services\GuideService.cs" />
-    <Compile Include="Services\OpenAIValueFinder.cs" />
+    <Compile Include="Services\OpenAIClient.cs" />
     <Compile Include="Services\PlaceholderDocument.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\PlaceholderValuesFile.cs" />
@@ -369,6 +375,7 @@
     <Compile Include="Services\RegistrySettingsService.cs" />
     <Compile Include="Services\TaskPaneService.cs" />
     <Compile Include="Services\UrlLauncher.cs" />
+    <Compile Include="Services\ValueFinder.cs" />
     <Compile Include="Services\ValueRequest.cs" />
     <Compile Include="Services\WordHost.cs" />
     <Compile Include="Tools\DialogServiceExtensions.cs" />

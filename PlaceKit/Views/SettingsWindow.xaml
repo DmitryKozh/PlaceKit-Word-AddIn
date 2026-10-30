@@ -3,19 +3,55 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tools="clr-namespace:PlaceKit.Tools"
         xmlns:vm="clr-namespace:PlaceKit.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
         Title="{Binding Title}"
-        Width="540"
+        Width="720"
         WindowStartupLocation="CenterOwner"
         FocusManager.FocusedElement="{Binding ElementName=OpeningMarkerBox}"
         Style="{DynamicResource DialogWindowStyle}">
     <Window.Resources>
-        <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="GeneralPageStyle" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Hidden" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ShowGeneralPage}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="AiPageStyle" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Hidden" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ShowAiPage}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="ConnectionIconStyle" BasedOn="{StaticResource IconTextStyle}" TargetType="TextBlock">
+                <Setter Property="Text" Value="&#xEA39;" />
+                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                        <Setter Property="Text" Value="&#xE73E;" />
+                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+        <KeyBinding Key="Tab" Command="{Binding SwitchPageCommand}" Modifiers="Control" />
+        <KeyBinding Key="Tab" Command="{Binding SwitchPageCommand}" Modifiers="Control+Shift" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -38,84 +74,168 @@
             </DockPanel>
         </Border>
 
-        <StackPanel Margin="{StaticResource DialogPadding}">
-            <TextBlock Style="{StaticResource SectionTextStyle}" Text="Placeholder pattern" />
-            <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Text between these markers becomes a placeholder when you click Create." />
+        <!-- Pages are Hidden, not Collapsed, so the window keeps the taller one's height -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
 
-            <Grid Margin="0,12,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-
-                <!-- monospace text is already centred, symmetric padding -->
-                <StackPanel>
-                    <Label Content="_Opening marker" Target="{Binding ElementName=OpeningMarkerBox}" />
-                    <TextBox x:Name="OpeningMarkerBox"
-                             Padding="6,5"
-                             FontFamily="{StaticResource CodeFontFamily}"
-                             MaxLength="10"
-                             Text="{Binding OpeningMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-                    <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=OpeningMarkerBox}" />
+            <Border Background="{StaticResource FooterBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="8,16">
+                    <RadioButton Content="General"
+                                 GroupName="Page"
+                                 IsChecked="{Binding ShowGeneralPage}"
+                                 Style="{StaticResource NavigationItemStyle}"
+                                 Tag="&#xE713;" />
+                    <RadioButton Margin="0,4,0,0"
+                                 Content="AI"
+                                 GroupName="Page"
+                                 IsChecked="{Binding ShowAiPage}"
+                                 Style="{StaticResource NavigationItemStyle}"
+                                 Tag="&#xE82F;" />
                 </StackPanel>
-
-                <StackPanel Grid.Column="2">
-                    <Label Content="_Closing marker" Target="{Binding ElementName=ClosingMarkerBox}" />
-                    <TextBox x:Name="ClosingMarkerBox"
-                             Padding="6,5"
-                             FontFamily="{StaticResource CodeFontFamily}"
-                             MaxLength="10"
-                             Text="{Binding ClosingMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-                    <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=ClosingMarkerBox}" />
-                </StackPanel>
-            </Grid>
-
-            <Border Margin="0,8,0,0"
-                    Padding="12,7,12,9"
-                    Background="{StaticResource AccentSubtleBrush}"
-                    CornerRadius="4">
-                <TextBlock>
-                    <Run Foreground="{StaticResource SecondaryTextBrush}" Text="Example:" />
-                    <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding Preview, Mode=OneWay}" />
-                </TextBlock>
             </Border>
 
-            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="After creating placeholders" />
-            <CheckBox Content="Show a _summary and ask whether to open the editor" IsChecked="{Binding ShowCreateSummary}" />
-            <CheckBox Margin="24,10,0,0"
-                      Content="Open the _editor automatically"
-                      IsChecked="{Binding OpenEditorAfterCreate}"
-                      IsEnabled="{Binding CanChooseAutoOpen}" />
+            <Grid Grid.Column="1">
+                <StackPanel Margin="{StaticResource DialogPadding}" Style="{StaticResource GeneralPageStyle}">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="Placeholder pattern" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Text between these markers becomes a placeholder when you click Create." />
 
-            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="Open the editor in" />
-            <StackPanel Orientation="Horizontal">
-                <RadioButton Content="Side _panel next to the document" GroupName="EditorPlacement" IsChecked="{Binding OpenInSidePanel}" />
-                <RadioButton Margin="24,0,0,0"
-                             Content="Separate _window"
-                             GroupName="EditorPlacement"
-                             IsChecked="{Binding OpenInWindow}" />
-            </StackPanel>
-            <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="The button in the editor's top-left corner moves it between the two." />
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
 
-            <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="When finalizing" />
-            <CheckBox Content="_Ask what to do with placeholders that are not filled in" IsChecked="{Binding AskAboutEmptyPlaceholders}" />
-            <StackPanel Margin="24,10,0,0" Orientation="Horizontal">
-                <RadioButton Content="Turn them back into _markers"
-                             GroupName="EmptyPlaceholders"
-                             IsChecked="{Binding KeepEmptyPlaceholdersAsMarkers}"
-                             IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
-                <RadioButton Margin="24,0,0,0"
-                             Content="_Delete them from the text"
-                             GroupName="EmptyPlaceholders"
-                             IsChecked="{Binding DeleteEmptyPlaceholders}"
-                             IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
-            </StackPanel>
+                        <!-- monospace text is already centred, symmetric padding -->
+                        <StackPanel>
+                            <Label Content="_Opening marker" Target="{Binding ElementName=OpeningMarkerBox}" />
+                            <TextBox x:Name="OpeningMarkerBox"
+                                     Padding="6,5"
+                                     FontFamily="{StaticResource CodeFontFamily}"
+                                     MaxLength="10"
+                                     Text="{Binding OpeningMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=OpeningMarkerBox}" />
+                        </StackPanel>
 
-            <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}">
-                <Run Text="Stored in" />
-                <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding StorageLocation, Mode=OneWay}" />
-            </TextBlock>
-        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <Label Content="_Closing marker" Target="{Binding ElementName=ClosingMarkerBox}" />
+                            <TextBox x:Name="ClosingMarkerBox"
+                                     Padding="6,5"
+                                     FontFamily="{StaticResource CodeFontFamily}"
+                                     MaxLength="10"
+                                     Text="{Binding ClosingMarker, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Style="{StaticResource ErrorTextStyle}" Text="{Binding (Validation.Errors)/ErrorContent, ElementName=ClosingMarkerBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Margin="0,8,0,0"
+                            Padding="12,7,12,9"
+                            Background="{StaticResource AccentSubtleBrush}"
+                            CornerRadius="4">
+                        <TextBlock>
+                            <Run Foreground="{StaticResource SecondaryTextBrush}" Text="Example:" />
+                            <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding Preview, Mode=OneWay}" />
+                        </TextBlock>
+                    </Border>
+
+                    <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="After creating placeholders" />
+                    <CheckBox Content="Show a _summary and ask whether to open the editor" IsChecked="{Binding ShowCreateSummary}" />
+                    <CheckBox Margin="24,10,0,0"
+                              Content="Open the _editor automatically"
+                              IsChecked="{Binding OpenEditorAfterCreate}"
+                              IsEnabled="{Binding CanChooseAutoOpen}" />
+
+                    <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="Open the editor in" />
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="Side _panel next to the document" GroupName="EditorPlacement" IsChecked="{Binding OpenInSidePanel}" />
+                        <RadioButton Margin="24,0,0,0"
+                                     Content="Separate _window"
+                                     GroupName="EditorPlacement"
+                                     IsChecked="{Binding OpenInWindow}" />
+                    </StackPanel>
+                    <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="The button in the editor's top-left corner moves it between the two." />
+
+                    <TextBlock Margin="0,24,0,4" Style="{StaticResource SectionTextStyle}" Text="When finalizing" />
+                    <CheckBox Content="_Ask what to do with placeholders that are not filled in" IsChecked="{Binding AskAboutEmptyPlaceholders}" />
+                    <StackPanel Margin="24,10,0,0" Orientation="Horizontal">
+                        <RadioButton Content="Turn them back into _markers"
+                                     GroupName="EmptyPlaceholders"
+                                     IsChecked="{Binding KeepEmptyPlaceholdersAsMarkers}"
+                                     IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
+                        <RadioButton Margin="24,0,0,0"
+                                     Content="_Delete them from the text"
+                                     GroupName="EmptyPlaceholders"
+                                     IsChecked="{Binding DeleteEmptyPlaceholders}"
+                                     IsEnabled="{Binding CanChooseEmptyPlaceholderAction}" />
+                    </StackPanel>
+
+                    <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}">
+                        <Run Text="Stored in" />
+                        <Run FontFamily="{StaticResource CodeFontFamily}" Text="{Binding StorageLocation, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Margin="{StaticResource DialogPadding}" Style="{StaticResource AiPageStyle}">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="AI service" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="From text finds placeholder values in a text you paste, such as an email. It uses an AI service with your own API key." />
+                    <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                        <RadioButton Content="_Claude by Anthropic" GroupName="AiProvider" IsChecked="{Binding UseClaude}" />
+                        <RadioButton Margin="24,0,0,0"
+                                     Content="Chat_GPT by OpenAI"
+                                     GroupName="AiProvider"
+                                     IsChecked="{Binding UseOpenAI}" />
+                    </StackPanel>
+
+                    <Label Margin="0,16,0,0" Content="{Binding ApiKeyLabel}" Target="{Binding ElementName=ApiKeyBox}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <PasswordBox x:Name="ApiKeyBox" Tag="{Binding ApiKeyHint}" tools:PasswordBoxBinding.Password="{Binding NewApiKey, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1"
+                                Margin="8,0,0,0"
+                                Command="{Binding RemoveApiKeyCommand}"
+                                Content="Remove"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTip="Delete the saved key when you save the settings"
+                                Visibility="{Binding HasSavedApiKey, Converter={StaticResource BooleanToVisibility}}" />
+                    </Grid>
+                    <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}">
+                        <Run Text="Saved encrypted for your Windows account." />
+                        <Hyperlink Command="{Binding OpenApiKeysPageCommand}" Foreground="{StaticResource AccentBrush}">
+                            <Run Text="{Binding ApiKeysPageLink, Mode=OneWay}" />
+                        </Hyperlink>
+                    </TextBlock>
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Button VerticalAlignment="Top"
+                                Command="{Binding TestConnectionCommand}"
+                                Content="_Test connection"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        <Grid Grid.Column="1"
+                              Margin="12,6,0,0"
+                              VerticalAlignment="Top"
+                              Visibility="{Binding HasConnectionMessage, Converter={StaticResource BooleanToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Margin="0,3,8,0" VerticalAlignment="Top" Style="{StaticResource ConnectionIconStyle}" />
+                            <TextBlock Grid.Column="1" Text="{Binding ConnectionMessage}" TextWrapping="Wrap" />
+                        </Grid>
+                    </Grid>
+
+                    <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding PrivacyNote}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
     </DockPanel>
 </Window>

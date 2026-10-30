@@ -17,18 +17,27 @@ namespace PlaceKit.Tests.Fakes
 
         public string Location => @"HKEY_CURRENT_USER\Software\BoringJob\PlaceKit";
 
-        public PlaceKitSettings Load() => new PlaceKitSettings
-        {
-            OpeningMarker = Current.OpeningMarker,
-            ClosingMarker = Current.ClosingMarker,
-            ShowCreateSummary = Current.ShowCreateSummary,
-            OpenEditorAfterCreate = Current.OpenEditorAfterCreate,
-            EditorPlacement = Current.EditorPlacement,
-            AskAboutEmptyPlaceholders = Current.AskAboutEmptyPlaceholders,
-            EmptyPlaceholderAction = Current.EmptyPlaceholderAction,
-        };
+        public PlaceKitSettings Load() => Copy(Current, new PlaceKitSettings());
 
-        public void Save(PlaceKitSettings settings) => Saved = settings;
+        // Like the registry: what is saved is what the next Load returns.
+        public void Save(PlaceKitSettings settings)
+        {
+            Saved = settings;
+            Copy(settings, Current);
+        }
+
+        static PlaceKitSettings Copy(PlaceKitSettings from, PlaceKitSettings to)
+        {
+            to.OpeningMarker = from.OpeningMarker;
+            to.ClosingMarker = from.ClosingMarker;
+            to.ShowCreateSummary = from.ShowCreateSummary;
+            to.OpenEditorAfterCreate = from.OpenEditorAfterCreate;
+            to.EditorPlacement = from.EditorPlacement;
+            to.AskAboutEmptyPlaceholders = from.AskAboutEmptyPlaceholders;
+            to.EmptyPlaceholderAction = from.EmptyPlaceholderAction;
+            to.AiProvider = from.AiProvider;
+            return to;
+        }
     }
 
     sealed class InlineProgress : IProgressService
@@ -131,15 +140,86 @@ namespace PlaceKit.Tests.Fakes
         public void Delete(AiProvider provider) => _keys.Remove(provider);
     }
 
-    sealed class FakeValueFinder : IValueFinder
+    sealed class FakeAiService : IAiService
     {
-        public FakeValueFinder(AiProvider provider = AiProvider.Claude)
+        public AiProvider Provider { get; set; } = AiProvider.Claude;
+
+        public bool HasApiKey { get; set; } = true;
+
+        public List<string> EnsuredFor { get; } = new List<string>();
+
+        // What the user does when asked to set up a key; by default nothing, so the answer is HasApiKey.
+        public Action OnSetUpKey { get; set; } = () => { };
+
+        public int SettingsOpened { get; private set; }
+
+        public Action OnOpenSettings { get; set; } = () => { };
+
+        public List<KeyValuePair<AiProvider, string>> TestedKeys { get; } = new List<KeyValuePair<AiProvider, string>>();
+
+        public Exception TestError { get; set; }
+
+        public string Send(AiRequest request, string progressTitle) => throw new NotSupportedException("The view model tests use fake finders.");
+
+        public void TestKey(AiProvider provider, string apiKey)
+        {
+            TestedKeys.Add(new KeyValuePair<AiProvider, string>(provider, apiKey));
+            if (TestError != null)
+            {
+                throw TestError;
+            }
+        }
+
+        public bool EnsureApiKey(string feature)
+        {
+            EnsuredFor.Add(feature);
+            if (!HasApiKey)
+            {
+                OnSetUpKey();
+            }
+
+            return HasApiKey;
+        }
+
+        public void OpenSettings()
+        {
+            SettingsOpened++;
+            OnOpenSettings();
+        }
+    }
+
+    // A service that answers with Answer and remembers the key and request it got.
+    sealed class FakeAiClient : IAiClient
+    {
+        public FakeAiClient(AiProvider provider)
         {
             Provider = provider;
         }
 
         public AiProvider Provider { get; }
 
+        public string Answer { get; set; } = "{}";
+
+        public string LastApiKey { get; private set; }
+
+        public AiRequest LastRequest { get; private set; }
+
+        public System.Threading.Tasks.Task<string> SendAsync(string apiKey, AiRequest request, CancellationToken token)
+        {
+            LastApiKey = apiKey;
+            LastRequest = request;
+            return System.Threading.Tasks.Task.FromResult(Answer);
+        }
+
+        public System.Threading.Tasks.Task TestKeyAsync(string apiKey, CancellationToken token)
+        {
+            LastApiKey = apiKey;
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+    }
+
+    sealed class FakeValueFinder : IValueFinder
+    {
         public Dictionary<string, string> Values { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
         public Exception Error { get; set; }

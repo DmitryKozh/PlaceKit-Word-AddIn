@@ -21,7 +21,7 @@ namespace PlaceKit.Tests.Services
 
         [TestInitialize]
         public void CreateService() =>
-            _service = new EditorService(_placeholders, new InlineProgress(), _dialogs, _settings, _panes, new FakeValuesFile(), names => null);
+            _service = new EditorService(_placeholders, new InlineProgress(), _dialogs, _settings, _panes, new FakeValuesFile(), new FakeAiService(), names => null);
 
         [TestCleanup]
         public void CloseDocuments() => WordInstance.CloseDocuments();

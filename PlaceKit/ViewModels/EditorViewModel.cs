@@ -19,15 +19,16 @@ namespace PlaceKit.ViewModels
         readonly IPlaceholderDocument _document;
         readonly IDialogService _dialogs;
         readonly IPlaceholderValuesFile _valuesFile;
+        readonly IAiService _ai;
         readonly Func<IReadOnlyList<string>, FillFromTextViewModel> _createFillFromText;
 
-        // createFillFromText: the Fill from text dialog for these placeholder names.
-        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs, IPlaceholderValuesFile valuesFile, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
+        public EditorViewModel(IPlaceholderDocument document, IDialogService dialogs, IPlaceholderValuesFile valuesFile, IAiService ai, Func<IReadOnlyList<string>, FillFromTextViewModel> createFillFromText)
             : base("Fill placeholders")
         {
             _document = document;
             _dialogs = dialogs;
             _valuesFile = valuesFile;
+            _ai = ai;
             _createFillFromText = createFillFromText;
             SetItems(Enumerable.Empty<PlaceholderItemViewModel>());
 
@@ -166,7 +167,6 @@ namespace PlaceKit.ViewModels
             ModifiedCount = list.Count(item => item.IsModified);
         }
 
-        // Called by Fody when SearchText changes.
         void OnSearchTextChanged()
         {
             ItemsView.Refresh();
@@ -190,7 +190,7 @@ namespace PlaceKit.ViewModels
             }
         }
 
-        // Writes the edits to the document. False when the user canceled.
+        // false if canceled
         public bool SaveChanges()
         {
             PlaceholderOperationResult result = _document.SavePlaceholders(GetChanges());
@@ -232,7 +232,7 @@ namespace PlaceKit.ViewModels
             Close(true);
         }
 
-        // Fills in the editor only; the user reviews the values and saves them like any other edit.
+        // Only fills the editor; nothing reaches the document before Save.
         void Import()
         {
             string path = _dialogs.ShowOpenFileDialog("Import values", ValuesFileFilter);
@@ -269,9 +269,13 @@ namespace PlaceKit.ViewModels
             _dialogs.ShowMessage(Caption, message, MessageKind.Information);
         }
 
-        // Like Import, the values found only fill in the editor; the user checks them and saves.
         void FillFromText()
         {
+            if (!_ai.EnsureApiKey("From text"))
+            {
+                return;
+            }
+
             FillFromTextViewModel dialog = _createFillFromText(Items.Select(item => item.Name).ToList());
             if (_dialogs.ShowDialog(dialog) != true)
             {
@@ -310,8 +314,7 @@ namespace PlaceKit.ViewModels
             return filled;
         }
 
-        // Exports what the editor shows, unsaved edits included. Empty placeholders are left out,
-        // so importing the file never clears a value.
+        // Unsaved edits included. Empty ones are left out, so an import never clears a value.
         void Export()
         {
             string path = _dialogs.ShowSaveFileDialog("Export values", ValuesFileFilter, _document.Name + ".json");

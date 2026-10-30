@@ -8,7 +8,6 @@ using PlaceKit.Services;
 
 namespace PlaceKit.Tests.Services
 {
-    // The request and the reading of the answer; nothing here calls a service.
     [TestClass]
     public class ValueRequestTests
     {
@@ -56,7 +55,7 @@ namespace PlaceKit.Tests.Services
         [DataRow("{\"values\":[{\"value\":\"x\"}]}")]
         public void ParseValues_RejectsAnAnswerOfAnotherShape(string json)
         {
-            ValueFinderException error = Assert.ThrowsException<ValueFinderException>(() => ValueRequest.ParseValues(json, Names));
+            AiServiceException error = Assert.ThrowsException<AiServiceException>(() => ValueRequest.ParseValues(json, Names));
 
             Assert.AreEqual("The answer could not be read. Try again.", error.Message);
         }

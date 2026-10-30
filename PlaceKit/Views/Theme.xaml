@@ -22,6 +22,9 @@
     <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#8A8A8A" />
     <SolidColorBrush x:Key="WarningBrush" Color="#9D5D00" />
     <SolidColorBrush x:Key="ErrorBrush" Color="#C42B1C" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#0F7B0F" />
+    <!-- on FooterBrush, as the navigation list in Settings -->
+    <SolidColorBrush x:Key="NavigationHoverBrush" Color="#EDEDED" />
 
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas</FontFamily>
@@ -88,7 +91,7 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- A small label, such as a skill in the About window -->
+    <!-- Skill tags in About -->
     <Style x:Key="TagStyle" TargetType="Border">
         <Setter Property="Margin" Value="0,0,6,6" />
         <Setter Property="Padding" Value="8,2,8,4" />
@@ -503,6 +506,54 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NavigationView-style page item; Tag is the glyph. A RadioButton, so arrow keys switch pages. -->
+    <Style x:Key="NavigationItemStyle" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Item"
+                            Height="36"
+                            Background="Transparent"
+                            CornerRadius="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="Indicator"
+                                       Width="3"
+                                       Height="16"
+                                       Fill="{StaticResource AccentBrush}"
+                                       RadiusX="1.5"
+                                       RadiusY="1.5"
+                                       Visibility="Hidden" />
+                            <TextBlock Grid.Column="1"
+                                       Margin="9,0,12,0"
+                                       FontSize="16"
+                                       Style="{StaticResource IconTextStyle}"
+                                       Text="{TemplateBinding Tag}" />
+                            <ContentPresenter Grid.Column="1"
+                                              Margin="37,0,8,2"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Item" Property="Background" Value="{StaticResource NavigationHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Item" Property="Background" Value="{StaticResource ControlPressedBrush}" />
+                            <Setter TargetName="Indicator" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -16,6 +16,9 @@ namespace PlaceKit.Models
 
         public EmptyPlaceholderAction EmptyPlaceholderAction { get; set; } = EmptyPlaceholderAction.KeepMarkers;
 
+        // keys are in IApiKeyStore
+        public AiProvider AiProvider { get; set; } = AiProvider.Claude;
+
         public PlaceholderPattern CreatePattern() => new PlaceholderPattern(OpeningMarker, ClosingMarker);
     }
 }

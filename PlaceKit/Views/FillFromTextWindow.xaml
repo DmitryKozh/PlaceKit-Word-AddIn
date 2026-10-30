@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:tools="clr-namespace:PlaceKit.Tools"
         xmlns:vm="clr-namespace:PlaceKit.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:FillFromTextViewModel}"
@@ -35,9 +34,8 @@
 
         <StackPanel Margin="{StaticResource DialogPadding}">
             <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="{Binding Intro}" />
-            <!-- Enter adds a line here; Find values is the default button for the rest of the window -->
             <TextBox x:Name="SourceBox"
-                     Height="200"
+                     Height="240"
                      Margin="0,12,0,0"
                      VerticalContentAlignment="Top"
                      AcceptsReturn="True"
@@ -50,38 +48,10 @@
                        Text="{Binding Error}"
                        Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibility}}" />
 
-            <TextBlock Margin="0,16,0,4" Text="Find the values with" />
-            <StackPanel Orientation="Horizontal">
-                <RadioButton Content="_Claude by Anthropic" GroupName="Service" IsChecked="{Binding UseClaude}" />
-                <RadioButton Margin="24,0,0,0"
-                             Content="Chat_GPT by OpenAI"
-                             GroupName="Service"
-                             IsChecked="{Binding UseOpenAI}" />
-            </StackPanel>
-
-            <Label Margin="0,16,0,0" Content="{Binding ApiKeyLabel}" Target="{Binding ElementName=ApiKeyBox}" />
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <PasswordBox x:Name="ApiKeyBox" Tag="{Binding ApiKeyHint}" tools:PasswordBoxBinding.Password="{Binding NewApiKey, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="1"
-                        Margin="8,0,0,0"
-                        Command="{Binding RemoveApiKeyCommand}"
-                        Content="_Remove"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        ToolTip="Delete the saved key from this computer"
-                        Visibility="{Binding HasSavedApiKey, Converter={StaticResource BooleanToVisibility}}" />
-            </Grid>
-            <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}">
-                <Run Text="Saved encrypted for your Windows account." />
-                <Hyperlink Command="{Binding OpenApiKeysPageCommand}" Foreground="{StaticResource AccentBrush}">
-                    <Run Text="{Binding ApiKeysPageText, Mode=OneWay}" />
-                </Hyperlink>
+            <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}">
+                <Run Text="{Binding ServiceNote, Mode=OneWay}" />
+                <Hyperlink Command="{Binding ChangeServiceCommand}" Foreground="{StaticResource AccentBrush}">AI settings</Hyperlink>
             </TextBlock>
-
-            <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding PrivacyNote}" />
         </StackPanel>
     </DockPanel>
 </Window>

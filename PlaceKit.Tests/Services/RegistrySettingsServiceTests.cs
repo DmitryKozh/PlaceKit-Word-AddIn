@@ -51,6 +51,7 @@ namespace PlaceKit.Tests.Services
                 EditorPlacement = EditorPlacement.Window,
                 AskAboutEmptyPlaceholders = false,
                 EmptyPlaceholderAction = EmptyPlaceholderAction.Delete,
+                AiProvider = AiProvider.OpenAI,
             });
 
             PlaceKitSettings loaded = _store.Load();
@@ -62,6 +63,7 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(EditorPlacement.Window, loaded.EditorPlacement);
             Assert.IsFalse(loaded.AskAboutEmptyPlaceholders);
             Assert.AreEqual(EmptyPlaceholderAction.Delete, loaded.EmptyPlaceholderAction);
+            Assert.AreEqual(AiProvider.OpenAI, loaded.AiProvider);
         }
 
         [TestMethod]
@@ -85,6 +87,7 @@ namespace PlaceKit.Tests.Services
                 key.SetValue("ShowCreateSummary", "yes", RegistryValueKind.String);
                 key.SetValue("EditorPlacement", "7");
                 key.SetValue("EmptyPlaceholderAction", "Shred");
+                key.SetValue("AiProvider", "Gemini");
             }
 
             PlaceKitSettings settings = _store.Load();
@@ -94,6 +97,7 @@ namespace PlaceKit.Tests.Services
             Assert.IsTrue(settings.ShowCreateSummary);
             Assert.AreEqual(EditorPlacement.SidePanel, settings.EditorPlacement);
             Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, settings.EmptyPlaceholderAction);
+            Assert.AreEqual(AiProvider.Claude, settings.AiProvider);
         }
 
         [TestMethod]

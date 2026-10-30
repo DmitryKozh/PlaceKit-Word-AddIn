@@ -15,7 +15,7 @@ namespace PlaceKit.Tests.ViewModels
         readonly FakeDialogs _dialogs = new FakeDialogs();
         readonly FakeValuesFile _valuesFile = new FakeValuesFile();
         readonly FakeValueFinder _finder = new FakeValueFinder();
-        readonly MemoryApiKeyStore _apiKeys = new MemoryApiKeyStore { Claude = "test key" };
+        readonly FakeAiService _ai = new FakeAiService();
         readonly List<bool?> _closes = new List<bool?>();
         FakeDocument _document;
         EditorViewModel _editor;
@@ -27,7 +27,7 @@ namespace PlaceKit.Tests.ViewModels
                 new PlaceholderInfo("Client name", "", 2, false),
                 new PlaceholderInfo("Order", "42", 1, false),
                 new PlaceholderInfo("Date", "", 1, false));
-            _editor = new EditorViewModel(_document, _dialogs, _valuesFile, CreateFillFromText);
+            _editor = new EditorViewModel(_document, _dialogs, _valuesFile, _ai, CreateFillFromText);
             _editor.CloseRequested += (sender, e) => _closes.Add(e.DialogResult);
             _editor.Reload();
         }
@@ -35,7 +35,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void BeforeLoading_IsEmpty()
         {
-            var editor = new EditorViewModel(_document, _dialogs, _valuesFile, CreateFillFromText);
+            var editor = new EditorViewModel(_document, _dialogs, _valuesFile, _ai, CreateFillFromText);
 
             Assert.IsTrue(editor.IsEmpty);
             Assert.IsFalse(editor.HasNoMatches);
@@ -248,7 +248,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void SaveAndFinalize_NeedsPlaceholders()
         {
-            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, CreateFillFromText);
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, _ai, CreateFillFromText);
             editor.Reload();
 
             Assert.IsFalse(editor.SaveAndFinalizeCommand.CanExecute(null));
@@ -333,7 +333,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void Import_NeedsPlaceholders()
         {
-            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, CreateFillFromText);
+            var editor = new EditorViewModel(new FakeDocument(), _dialogs, _valuesFile, _ai, CreateFillFromText);
             editor.Reload();
 
             Assert.IsFalse(editor.ImportCommand.CanExecute(null));
@@ -371,6 +371,30 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void FillFromText_WithoutAKey_StopsWhenNoneIsSetUp()
+        {
+            _ai.HasApiKey = false;
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            CollectionAssert.AreEqual(new[] { "From text" }, _ai.EnsuredFor);
+            Assert.AreEqual(0, _dialogs.Shown.Count);
+        }
+
+        [TestMethod]
+        public void FillFromText_WithoutAKey_GoesOnOnceOneIsSetUp()
+        {
+            _ai.HasApiKey = false;
+            _ai.OnSetUpKey = () => _ai.HasApiKey = true;
+            _finder.Values["Client name"] = "Contoso";
+            _dialogs.OnShowDialog = FindValuesIn("Contoso");
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            Assert.AreEqual("Contoso", _editor.Items[0].Value);
+        }
+
+        [TestMethod]
         public void FillFromText_CanceledChangesNothing()
         {
             _finder.Values["Client name"] = "Contoso";
@@ -384,7 +408,7 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         FillFromTextViewModel CreateFillFromText(IReadOnlyList<string> names) =>
-            new FillFromTextViewModel(names, new[] { _finder }, _apiKeys, new FakeUrlLauncher(), _dialogs);
+            new FillFromTextViewModel(names, _finder, _ai, _dialogs);
 
         // What the user does in the Fill from text dialog: paste the text and click Find values.
         static Action<DialogViewModelBase> FindValuesIn(string text) => viewModel =>
@@ -397,7 +421,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void CommandErrors_AreReportedNotThrown()
         {
-            var editor = new EditorViewModel(new FailingDocument(), _dialogs, _valuesFile, CreateFillFromText);
+            var editor = new EditorViewModel(new FailingDocument(), _dialogs, _valuesFile, _ai, CreateFillFromText);
 
             editor.RefreshCommand.Execute(null);
 

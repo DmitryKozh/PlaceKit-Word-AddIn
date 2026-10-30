@@ -11,7 +11,6 @@ using Word = Microsoft.Office.Interop.Word;
 
 namespace PlaceKit.Tests.Services
 {
-    // Finalize from the ribbon and Save and finalize from the editor, on a document in the hidden Word.
     [TestClass]
     [TestCategory(WordInstance.Category)]
     public class EditorServiceFinalizeTests
@@ -26,7 +25,7 @@ namespace PlaceKit.Tests.Services
         [TestInitialize]
         public void CreateDocument()
         {
-            _service = new EditorService(_placeholders, new InlineProgress(), _dialogs, _settings, _panes, new FakeValuesFile(), names => null);
+            _service = new EditorService(_placeholders, new InlineProgress(), _dialogs, _settings, _panes, new FakeValuesFile(), new FakeAiService(), names => null);
             _document = WordInstance.NewDocument("Dear {{Name}}, order {{Order}} ships on {{Date}}.");
             _placeholders.CreatePlaceholders(_document, PlaceholderPattern.Default, new ProgressRecorder(), CancellationToken.None);
             Fill(("Order", "42"));
@@ -173,7 +172,7 @@ namespace PlaceKit.Tests.Services
         [TestMethod]
         public void SaveAndFinalize_CanceledCheckLeavesNoRequestBehind()
         {
-            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new OperationCanceledException()), _dialogs, _settings, _panes, new FakeValuesFile(), names => null);
+            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new OperationCanceledException()), _dialogs, _settings, _panes, new FakeValuesFile(), new FakeAiService(), names => null);
             service.Open(_document);
             EditorViewModel editor = _panes.Shown;
 
@@ -188,7 +187,7 @@ namespace PlaceKit.Tests.Services
         public void SaveAndFinalize_CanceledCheckInAWindowShowsTheWindowAgain()
         {
             _settings.Current.EditorPlacement = EditorPlacement.Window;
-            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new OperationCanceledException()), _dialogs, _settings, _panes, new FakeValuesFile(), names => null);
+            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new OperationCanceledException()), _dialogs, _settings, _panes, new FakeValuesFile(), new FakeAiService(), names => null);
             _dialogs.OnShowDialog = dialog =>
             {
                 var editor = (EditorViewModel)dialog;
@@ -213,7 +212,7 @@ namespace PlaceKit.Tests.Services
         public void SaveAndFinalize_ErrorInAWindowDoesNotLeaveTheEditorBehind()
         {
             _settings.Current.EditorPlacement = EditorPlacement.Window;
-            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new InvalidOperationException("boom")), _dialogs, _settings, _panes, new FakeValuesFile(), names => null);
+            var service = new EditorService(_placeholders, new StoppingProgress("Checking placeholders", new InvalidOperationException("boom")), _dialogs, _settings, _panes, new FakeValuesFile(), new FakeAiService(), names => null);
             _dialogs.OnShowDialog = dialog => ((EditorViewModel)dialog).SaveAndFinalizeCommand.Execute(null);
             Assert.ThrowsException<InvalidOperationException>(() => service.Open(_document));
 
