@@ -1,0 +1,72 @@
+name: Release
+
+# A tag such as v1.0.1 builds PlaceKit.msi and attaches it to the GitHub release of that tag.
+# Run it by hand to get the installer as a build artifact without a release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find Visual Studio with the Office tools
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -requires Microsoft.VisualStudio.Workload.Office -property installationPath
+          if (-not $vs) { throw 'This runner has no Visual Studio with the Office/SharePoint development workload.' }
+          "MSBUILD=$vs\MSBuild\Current\Bin\MSBuild.exe" >> $env:GITHUB_ENV
+          "VSTEST=$vs\Common7\IDE\Extensions\TestPlatform\vstest.console.exe" >> $env:GITHUB_ENV
+
+      # Office needs signed manifests. The installer adds this certificate's key to the user's trusted add-ins,
+      # so a certificate made for the build is enough; it is not the code signing that SmartScreen checks.
+      - name: Manifest certificate
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=BoringJob' -CertStoreLocation Cert:\CurrentUser\My
+          [IO.File]::WriteAllBytes("PlaceKit\PlaceKit_TemporaryKey.pfx", $cert.Export('Pfx'))
+          "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+
+      - name: Restore
+        shell: pwsh
+        run: '& $env:MSBUILD PlaceKit.slnx /t:Restore /p:RestorePackagesConfig=true /v:minimal'
+
+      - name: Build
+        shell: pwsh
+        run: '& $env:MSBUILD PlaceKit.slnx /p:Configuration=Release /p:ManifestCertificateThumbprint=$env:THUMBPRINT /v:minimal'
+
+      # The tests in the Word category need Word, which the runner doesn't have.
+      - name: Test
+        shell: pwsh
+        run: '& $env:VSTEST PlaceKit.Tests\bin\Release\net48\PlaceKit.Tests.dll /TestCaseFilter:"TestCategory!=Word"'
+
+      - name: Installer
+        shell: pwsh
+        run: '& $env:MSBUILD PlaceKit.Installer\PlaceKit.Installer.wixproj /restore /p:Configuration=Release /p:ManifestCertificateThumbprint=$env:THUMBPRINT /v:minimal'
+
+      - name: Check the version against the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = (Get-Item PlaceKit\bin\Release\PlaceKit.dll).VersionInfo.FileVersion
+          $tag = '${{ github.ref_name }}'.TrimStart('v')
+          if (-not $version.StartsWith($tag)) { throw "PlaceKit.dll is version $version, the tag is $tag. Update AssemblyInfo.cs." }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlaceKit
+          path: PlaceKit.Installer/bin/Release/en-US/PlaceKit.msi
+
+      - name: Publish
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PlaceKit.Installer/bin/Release/en-US/PlaceKit.msi
+          generate_release_notes: true

@@ -1,0 +1,19 @@
+<WixLocalization Culture="en-US" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <!-- Texts of the setup wizard; the ones with a WixUI name replace WixUI's. A text control shows one paragraph:
+       Windows Installer does not show an empty line between two. -->
+  <String Id="WelcomeDlgDescription" Value="Setup installs PlaceKit, a Word add-in for documents with placeholders. It installs for your account only and needs no administrator rights. Click Next to continue or Cancel to exit Setup." />
+  <String Id="VerifyReadyDlgInstallText" Value="Click Install to install PlaceKit in [INSTALLFOLDER] and add it to Word. Click Cancel to exit Setup." />
+  <String Id="VerifyReadyDlgRepairText" Value="Click Repair to restore the files and the Word registration of PlaceKit. Click Cancel to exit Setup." />
+  <String Id="VerifyReadyDlgRemoveText" Value="Click Remove to remove PlaceKit from Word and from your computer. Your PlaceKit settings stay. Click Cancel to exit Setup." />
+  <String Id="MaintenanceWelcomeDlgDescription" Value="Setup can repair PlaceKit or remove it from your computer. Click Next to continue or Cancel to exit Setup." />
+  <String Id="MaintenanceTypeDlgRepairText" Value="Restores the files and the Word registration of PlaceKit." />
+  <String Id="MaintenanceTypeDlgRemoveText" Value="Removes PlaceKit from Word and from your computer." />
+  <String Id="ExitDialogDescription" Value="Click Finish to exit Setup." />
+
+  <String Id="SetupWizardInstalledTitle" Value="{\WixUI_Font_Bigger}PlaceKit is installed" />
+  <String Id="SetupWizardRepairedTitle" Value="{\WixUI_Font_Bigger}PlaceKit is repaired" />
+  <String Id="SetupWizardRemovedTitle" Value="{\WixUI_Font_Bigger}PlaceKit is removed" />
+  <String Id="SetupWizardWhere" Value="Find it on the PlaceKit tab in Word." />
+  <String Id="SetupWizardRestart" Value="Word loads add-ins when it starts. If Word is open now, close it before you click Finish." />
+  <String Id="SetupWizardStartWord" Value="Start Word" />
+</WixLocalization>

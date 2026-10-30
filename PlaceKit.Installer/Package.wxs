@@ -1,0 +1,72 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?include Trust.wxi?>
+
+  <Package Name="PlaceKit"
+           Manufacturer="BoringJob"
+           Version="!(bind.FileVersion.PlaceKit.dll)"
+           UpgradeCode="D7640CAF-BDD8-47BA-B413-970BF79E82FD"
+           Scope="perUser">
+    <SummaryInformation Description="PlaceKit, a Word add-in for documents with placeholders" />
+    <!-- A build of the same version replaces the installed one rather than installing next to it. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of PlaceKit is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <UIRef Id="SetupWizard" />
+
+    <!-- Programs and Features -->
+    <Icon Id="PlaceKit.ico" SourceFile="PlaceKit.ico" />
+    <Property Id="ARPPRODUCTICON" Value="PlaceKit.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://boringjob.work/placekit/" />
+    <Property Id="ARPHELPLINK" Value="https://boringjob.work/contact/" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+    <Launch Condition="Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"
+            Message="PlaceKit needs the .NET Framework 4.8. Install it with Windows Update and run this installer again." />
+
+    <!-- Office installs the runtime as well; 32-bit Office registers it in the 32-bit view. -->
+    <Property Id="VSTORUNTIME">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4R" Name="Version" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="VSTORUNTIME32">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4R" Name="Version" Type="raw" Bitness="always32" />
+    </Property>
+    <Launch Condition="Installed OR VSTORUNTIME OR VSTORUNTIME32"
+            Message="PlaceKit needs the Visual Studio 2010 Tools for Office Runtime. Download it from https://www.microsoft.com/download/details.aspx?id=105890 and run this installer again." />
+
+    <!-- A folder chosen with INSTALLFOLDER=... on the command line is remembered, so uninstalling and upgrading find it. -->
+    <Property Id="INSTALLFOLDER">
+      <RegistrySearch Root="HKCU" Key="Software\BoringJob\PlaceKit\Installer" Name="InstallFolder" Type="raw" />
+    </Property>
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="PlaceKit" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- One component: in a per-user package its key path must be in HKCU, not a file. -->
+    <Component Id="AddIn" Directory="INSTALLFOLDER" Guid="69D1BC73-1E86-492A-BBE1-08EA19A27AB6">
+      <!-- PlaceKit.dll, its manifests and the assemblies the manifest names, written by the project at build time. -->
+      <?include Files.wxi?>
+
+      <!-- Word loads the add-in from the install folder (vstolocal), not from a ClickOnce cache. -->
+      <RegistryKey Root="HKCU" Key="Software\Microsoft\Office\Word\Addins\PlaceKit">
+        <RegistryValue Name="Manifest" Value="file:///[INSTALLFOLDER]PlaceKit.vsto|vstolocal" Type="string" KeyPath="yes" />
+        <RegistryValue Name="FriendlyName" Value="PlaceKit" Type="string" />
+        <RegistryValue Name="Description" Value="Fill in the placeholders of a document from one place." Type="string" />
+        <RegistryValue Name="LoadBehavior" Value="3" Type="integer" />
+      </RegistryKey>
+
+      <!-- Trusted without the "publisher cannot be verified" prompt; the key is the one the manifests are signed with. -->
+      <RegistryKey Root="HKCU" Key="Software\Microsoft\VSTO\Security\Inclusion\1E1373BC-B6BC-4B7B-AC1B-9E0FB8201FAE">
+        <RegistryValue Name="Url" Value="file:///[INSTALLFOLDER]PlaceKit.vsto" Type="string" />
+        <RegistryValue Name="PublicKey" Value="$(var.ManifestPublicKey)" Type="string" />
+      </RegistryKey>
+
+      <RegistryValue Root="HKCU" Key="Software\BoringJob\PlaceKit\Installer" Name="InstallFolder" Value="[INSTALLFOLDER]" Type="string" />
+
+      <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
+      <RemoveFolder Id="RemoveProgramsFolder" Directory="ProgramsFolder" On="uninstall" />
+    </Component>
+  </Package>
+</Wix>

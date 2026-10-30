@@ -13,6 +13,9 @@ namespace PlaceKit.IconRenderer
     // them into the image strips the add-in ships. Like Office's own icons they use a 32 x 32 grid with 1-unit lines on half units.
     public sealed class RibbonIcons
     {
+        // The About tile, as Office's Word blue.
+        public const string TileColor = "#2B579A";
+
         const double GridSize = 32;
 
         // The space a shape in front clears around itself in the shapes behind it.
@@ -197,7 +200,7 @@ namespace PlaceKit.IconRenderer
 
             Palette(string line, string accent, string promo)
             {
-                _brushes = new[] { line, accent, promo, "#2B579A", "#FFFFFF" }.Select(CreateBrush).ToArray();
+                _brushes = new[] { line, accent, promo, TileColor, "#FFFFFF" }.Select(CreateBrush).ToArray();
             }
 
             public Brush this[Ink ink] => _brushes[(int)ink];

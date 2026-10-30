@@ -31,10 +31,20 @@ To try it, click **Guide** on the PlaceKit tab. It opens a sample warranty claim
 
 Long operations show a progress window with Cancel. Every operation can be undone with a single Ctrl+Z. With Track Changes on, the values that Fill writes are tracked; creating and finalizing placeholders are not.
 
+## Install
+
+Download `PlaceKit.msi` from [boringjob.work/placekit](https://boringjob.work/placekit/) or the [releases](../../releases) and run it. It installs for the current user without administrator rights; start Word and the PlaceKit tab is there.
+
+- Needs Windows 10 or 11, Word 2013 or later (Microsoft 365 included), the .NET Framework 4.8 and the Visual Studio Tools for Office runtime. Current Windows and Office come with the last two; the installer says so if one is missing.
+- The installer is not code-signed yet, so Windows SmartScreen may warn about an unknown publisher: click More info, then Run anyway.
+- To install it silently, for example from a company's software deployment: `msiexec /i PlaceKit.msi /qn`.
+- Uninstall it in Settings > Apps. The PlaceKit settings stay in the registry.
+
 ## Project
 
 - `PlaceKit` - the VSTO add-in (.NET Framework 4.8, WPF, MVVM). The ribbon only calls commands of `RibbonViewModel`; the Word object model is used only by services such as `PlaceholderService` and `GuideService`. Services are wired up with Microsoft.Extensions.DependencyInjection in `CompositionRoot`, and PropertyChanged.Fody implements `INotifyPropertyChanged`. The ribbon images are PNG strips for the light and dark Office themes at 100 to 300 % scaling; the add-in loads the one that matches when Word starts.
-- `PlaceKit.IconRenderer` - draws those strips from the vector shapes in `RibbonIcons`. Run it after changing an icon; a test fails while the strips and the shapes differ.
+- `PlaceKit.IconRenderer` - draws those strips from the vector shapes in `RibbonIcons`, and the installer's icon and setup wizard pictures from the About tile. Run it after changing an icon; a test fails while the strips and the shapes differ.
+- `PlaceKit.Installer` - the MSI (WiX Toolset 5). It installs into `%LocalAppData%\Programs\PlaceKit`, registers the add-in in Word and adds the key the manifests are signed with to Office's trusted add-ins, so Word loads PlaceKit without asking. The list of files comes from the add-in's manifest at build time. The setup wizard uses the WixUI pages with PlaceKit's pictures and its own last page, which says where to find PlaceKit and can start Word.
 - `PlaceKit.Tests` - MSTest. Tests in the `Word` category start a hidden Word instance and work on real documents; the rest run without Office.
 
 ## Building
@@ -46,6 +56,16 @@ You need Visual Studio 2022 or later with the Office/SharePoint development work
 3. F5 starts Word with the add-in loaded (PlaceKit tab).
 
 Run the tests from Test Explorer. To skip the ones that need Word, filter with `TestCategory!=Word`.
+
+The installer is built from the command line, since Visual Studio opens a `.wixproj` only with the HeatWave extension:
+
+```
+msbuild PlaceKit.Installer\PlaceKit.Installer.wixproj /restore /p:Configuration=Release
+```
+
+The package is `PlaceKit.Installer\bin\Release\en-US\PlaceKit.msi`. It builds the add-in in Release without registering it in Word, so the registration F5 uses stays as it is. Installing the MSI on the same computer replaces that registration; after uninstalling it, build the add-in once to register it again.
+
+To release a version, set it in `PlaceKit/Properties/AssemblyInfo.cs` and push a tag such as `v1.0.1`. The Release workflow builds and tests it on GitHub and attaches `PlaceKit.msi` to the release.
 
 ## Need a .NET developer?
 

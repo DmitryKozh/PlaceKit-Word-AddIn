@@ -1,0 +1,69 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!-- PlaceKit.msi: a per-user install, no administrator rights needed.
+       Build with: msbuild PlaceKit.Installer\PlaceKit.Installer.wixproj /p:Configuration=Release /restore -->
+  <PropertyGroup>
+    <OutputName>PlaceKit</OutputName>
+    <AddInFolder>$(MSBuildThisFileDirectory)..\PlaceKit\bin\Release\</AddInFolder>
+    <!-- ICE91: the files are meant for the user's profile, this package is per user only.
+         ICE80: the check for the Office runtime also looks in the 64-bit registry, where 64-bit Office registers it.
+         ICE61: a build of the same version replaces the installed one, on purpose. -->
+    <SuppressIces>ICE61;ICE80;ICE91</SuppressIces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <!-- The add-in in Release, with its manifests signed but without registering it in Word on this computer,
+       which would replace the developer's registration of the Debug build. -->
+  <ItemGroup>
+    <ProjectReference Include="..\PlaceKit\PlaceKit.csproj"
+                      AdditionalProperties="Configuration=Release;Platform=AnyCPU;PrepareForRunDependsOn=CopyFilesToOutputDirectory%3BVisualStudioForApplicationsBuild" />
+  </ItemGroup>
+
+  <UsingTask TaskName="ReadInstallFiles" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Manifest ParameterType="System.String" Required="true" />
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Xml.Linq" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Files = XDocument.Load(Manifest).Descendants()
+            .Where(element => element.Name.LocalName == "dependentAssembly" && (string)element.Attribute("dependencyType") == "install")
+            .Select(element => (ITaskItem)new TaskItem((string)element.Attribute("codebase")))
+            .ToArray();
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <!-- From the add-in's manifests: the files Office needs, and the public key it checks their signature with.
+       With that key in the inclusion list, Office trusts the add-in without asking. -->
+  <Target Name="WriteAddInIncludes" AfterTargets="ResolveProjectReferences">
+    <ReadInstallFiles Manifest="$(AddInFolder)PlaceKit.dll.manifest">
+      <Output TaskParameter="Files" ItemName="_InstallFile" />
+    </ReadInstallFiles>
+    <ItemGroup>
+      <_InstallFile Include="PlaceKit.dll.manifest;PlaceKit.vsto" />
+    </ItemGroup>
+    <PropertyGroup>
+      <IncludeSearchPaths>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)</IncludeSearchPaths>
+      <_DeploymentManifest>$([System.IO.File]::ReadAllText('$(AddInFolder)PlaceKit.vsto'))</_DeploymentManifest>
+      <_ManifestPublicKey>$([System.Text.RegularExpressions.Regex]::Match($(_DeploymentManifest), '&lt;RSAKeyValue&gt;.*?&lt;/RSAKeyValue&gt;').Value)</_ManifestPublicKey>
+    </PropertyGroup>
+    <Error Condition="'$(_ManifestPublicKey)' == ''" Text="PlaceKit.vsto has no public key: the manifests are not signed." />
+    <Error Condition="$([System.String]::Copy('%(_InstallFile.Identity)').Contains('\'))" Text="%(_InstallFile.Identity) is in a subfolder, which the package does not create." />
+
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)Trust.wxi"
+                      Lines="&lt;Include&gt;;&lt;?define ManifestPublicKey = &quot;$(_ManifestPublicKey)&quot; ?&gt;;&lt;/Include&gt;"
+                      Overwrite="true" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)Files.wxi"
+                      Lines="&lt;Include xmlns=&quot;http://wixtoolset.org/schemas/v4/wxs&quot;&gt;;@(_InstallFile->'&lt;File Id=&quot;%(Identity)&quot; Source=&quot;$(AddInFolder)%(Identity)&quot; /&gt;');&lt;/Include&gt;"
+                      Overwrite="true" />
+  </Target>
+
+</Project>
