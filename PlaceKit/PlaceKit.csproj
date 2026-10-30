@@ -373,6 +373,7 @@
     <Compile Include="Services\WordHost.cs" />
     <Compile Include="Tools\DialogServiceExtensions.cs" />
     <Compile Include="Tools\NativeMethods.cs" />
+    <Compile Include="Tools\NetworkSettings.cs" />
     <Compile Include="Tools\OfficeTheme.cs" />
     <Compile Include="Tools\PasswordBoxBinding.cs" />
     <Compile Include="Tools\RelayCommand.cs" />

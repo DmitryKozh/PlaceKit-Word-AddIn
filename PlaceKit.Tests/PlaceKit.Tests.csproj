@@ -15,10 +15,12 @@
     <PackageReference Include="MSTest.TestFramework" Version="3.6.4" />
     <!-- same versions as the add-in, so the test runner's older dependencies don't win -->
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.11" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <!-- the tests read the JSON schema of the Claude request -->
+    <!-- the tests read the JSON schema of the requests and build the OpenAI SDK's errors -->
+    <PackageReference Include="System.ClientModel" Version="1.15.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.9" />
   </ItemGroup>
 

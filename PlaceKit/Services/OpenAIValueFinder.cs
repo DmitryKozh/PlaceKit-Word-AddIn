@@ -62,17 +62,9 @@ namespace PlaceKit.Services
             {
                 throw new OperationCanceledException(token);
             }
-            catch (ClientResultException ex)
+            catch (Exception ex) when (ex is ClientResultException || ex is AggregateException || ex is HttpRequestException || ex is OperationCanceledException)
             {
                 throw Describe(ex);
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new ValueFinderException("Could not reach OpenAI. Check the internet connection.", ex);
-            }
-            catch (OperationCanceledException ex)
-            {
-                throw new ValueFinderException("ChatGPT took too long to answer. Try again.", ex);
             }
 
             return ReadAnswer(completion, names);
@@ -91,9 +83,25 @@ namespace PlaceKit.Services
                 jsonSchemaIsStrict: true),
         };
 
-        // Status 0: no answer from the server at all.
-        static ValueFinderException Describe(ClientResultException ex)
+        // The SDK retries a failed request and then throws an AggregateException with the error of each try; the last
+        // one is described. Status 0: no answer from the server at all.
+        internal static ValueFinderException Describe(Exception error)
         {
+            if (error is AggregateException retries && retries.InnerExceptions.Count > 0)
+            {
+                return Describe(retries.InnerExceptions[retries.InnerExceptions.Count - 1]);
+            }
+
+            if (error is OperationCanceledException)
+            {
+                return new ValueFinderException("ChatGPT took too long to answer. Try again.", error);
+            }
+
+            if (!(error is ClientResultException ex))
+            {
+                return new ValueFinderException("Could not reach OpenAI. Check the internet connection.", error);
+            }
+
             switch (ex.Status)
             {
                 case 0:

@@ -1,3 +1,7 @@
+using System;
+using System.ClientModel;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
@@ -32,6 +36,28 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(AiProvider.OpenAI, finder.Provider);
             ValueFinderException error = Assert.ThrowsException<ValueFinderException>(() => finder.FindValues("text", Names));
             Assert.AreEqual("Add your OpenAI API key first.", error.Message);
+        }
+
+        // What the OpenAI SDK throws when every try failed, here without a TLS 1.2 connection.
+        [TestMethod]
+        public void OpenAI_RetriesThatNeverReachTheServer_AreANetworkError()
+        {
+            var failed = new AggregateException(
+                "Retry failed after 4 tries.",
+                new ClientResultException("An error occurred while sending the request.", null, new HttpRequestException("An error occurred while sending the request.")),
+                new ClientResultException("An error occurred while sending the request."));
+
+            ValueFinderException error = OpenAIValueFinder.Describe(failed);
+
+            Assert.AreEqual("Could not reach OpenAI. Check the internet connection.", error.Message);
+        }
+
+        [TestMethod]
+        public void OpenAI_RetriesThatTimeOut_SayItTookTooLong()
+        {
+            var failed = new AggregateException("Retry failed after 4 tries.", new HttpRequestException("x"), new TaskCanceledException());
+
+            Assert.AreEqual("ChatGPT took too long to answer. Try again.", OpenAIValueFinder.Describe(failed).Message);
         }
     }
 }

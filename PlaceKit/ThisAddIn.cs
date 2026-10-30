@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Office.Tools.Ribbon;
+using PlaceKit.Tools;
 using PlaceKit.ViewModels;
 
 namespace PlaceKit
@@ -12,6 +13,7 @@ namespace PlaceKit
         // Application and CustomTaskPanes are not ready yet and are passed lazily.
         protected override IRibbonExtension[] CreateRibbonObjects()
         {
+            NetworkSettings.UseModernTls();
             _services = CompositionRoot.Build(() => Application, () => CustomTaskPanes);
             return new IRibbonExtension[] { new PlaceKitRibbon(_services.GetRequiredService<RibbonViewModel>()) };
         }
