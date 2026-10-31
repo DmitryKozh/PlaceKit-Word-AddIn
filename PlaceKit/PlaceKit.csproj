@@ -349,8 +349,10 @@
     <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\IPlaceholderValuesFile.cs" />
     <Compile Include="Interfaces\IProgressService.cs" />
+    <Compile Include="Interfaces\IReleaseSource.cs" />
     <Compile Include="Interfaces\ISettingsService.cs" />
     <Compile Include="Interfaces\ITaskPaneService.cs" />
+    <Compile Include="Interfaces\IUpdateService.cs" />
     <Compile Include="Interfaces\IUrlLauncher.cs" />
     <Compile Include="Interfaces\IValueFinder.cs" />
     <Compile Include="Interfaces\IWordHost.cs" />
@@ -369,6 +371,8 @@
     <Compile Include="Models\PlaceKitSettings.cs" />
     <Compile Include="Models\ProductInfo.cs" />
     <Compile Include="Models\ProgressInfo.cs" />
+    <Compile Include="Models\ReleaseInfo.cs" />
+    <Compile Include="Models\UpdateCheckException.cs" />
     <Compile Include="Models\AiServiceException.cs" />
     <Compile Include="Services\AiService.cs" />
     <Compile Include="Services\ClaudeClient.cs" />
@@ -387,9 +391,11 @@
     <Compile Include="Services\ProtectedApiKeyStore.cs" />
     <Compile Include="Services\RegistrySettingsService.cs" />
     <Compile Include="Services\TaskPaneService.cs" />
+    <Compile Include="Services\UpdateService.cs" />
     <Compile Include="Services\UrlLauncher.cs" />
     <Compile Include="Services\ValueFinder.cs" />
     <Compile Include="Services\ValueRequest.cs" />
+    <Compile Include="Services\WebsiteReleaseSource.cs" />
     <Compile Include="Services\WordHost.cs" />
     <Compile Include="Tools\DialogServiceExtensions.cs" />
     <Compile Include="Tools\NativeMethods.cs" />
@@ -415,6 +421,7 @@
     <Compile Include="ViewModels\PlaceholderItemViewModel.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
     <Compile Include="ViewModels\RibbonViewModel.cs" />
+    <Compile Include="ViewModels\SettingsPage.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\AboutWindow.xaml.cs">

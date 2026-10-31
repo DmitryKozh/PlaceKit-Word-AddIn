@@ -11,5 +11,6 @@ namespace PlaceKit.Views
         About,
         Hire,
         Detect,
+        Update,
     }
 }

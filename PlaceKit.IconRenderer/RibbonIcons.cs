@@ -40,6 +40,10 @@ namespace PlaceKit.IconRenderer
                 Shape.Outline(Path("M26,26 L29.5,29.5"), Ink.Accent, 2),
             });
 
+        static readonly Icon UpdateIcon = new Icon(
+            new[] { Braces() },
+            new[] { Shape.Outline(Path("M25,18.5 V29 M20.5,24.5 L25,29 L29.5,24.5"), Ink.Accent, 2) });
+
         static readonly Icon FinalizeIcon = new Icon(
             new[] { Braces() },
             new[] { Shape.Outline(Path("M20.5,25 L24,28.5 L30,22"), Ink.Accent, 2) });
@@ -118,6 +122,8 @@ namespace PlaceKit.IconRenderer
                     return HireIcon;
                 case RibbonIcon.Detect:
                     return DetectIcon;
+                case RibbonIcon.Update:
+                    return UpdateIcon;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(icon));
             }

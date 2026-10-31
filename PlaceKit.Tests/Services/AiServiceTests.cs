@@ -22,7 +22,7 @@ namespace PlaceKit.Tests.Services
         [TestInitialize]
         public void Create() =>
             _ai = new AiService(new[] { _claude, _openAI }, _settings, _keys, new InlineProgress(), _dialogs,
-                () => new SettingsViewModel(_settings, _keys, _ai, new FakeUrlLauncher()));
+                () => new SettingsViewModel(_settings, _keys, _ai, new FakeUrlLauncher(), new FakeUpdateService(), TestProduct.Create()));
 
         [TestMethod]
         public void Send_UsesTheServiceAndKeyChosenInSettings()

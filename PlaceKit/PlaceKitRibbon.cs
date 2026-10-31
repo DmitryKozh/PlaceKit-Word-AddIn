@@ -28,6 +28,15 @@ namespace PlaceKit
                 Trace.TraceError("PlaceKit: cannot load the ribbon images: {0}", ex);
                 SetOfficeImages();
             }
+
+            ShowUpdate();
+            _viewModel.PropertyChanged += (sender, e) => ShowUpdate();
+        }
+
+        void ShowUpdate()
+        {
+            btnUpdate.Visible = _viewModel.IsUpdateAvailable;
+            btnUpdate.ScreenTip = _viewModel.UpdateTip;
         }
 
         // The system scale; a monitor with another scale gets the image resized by Office.
@@ -50,6 +59,7 @@ namespace PlaceKit
             btnSettings.Image = images[RibbonIcon.Settings];
             btnAbout.Image = images[RibbonIcon.About];
             btnHire.Image = images[RibbonIcon.Hire];
+            btnUpdate.Image = images[RibbonIcon.Update];
         }
 
         void SetOfficeImages()
@@ -62,6 +72,7 @@ namespace PlaceKit
             btnSettings.OfficeImageId = "PropertySheet";
             btnAbout.OfficeImageId = "Info";
             btnHire.OfficeImageId = "HappyFace";
+            btnUpdate.OfficeImageId = "Refresh";
         }
 
         void btnCreate_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.CreateCommand);
@@ -79,6 +90,8 @@ namespace PlaceKit
         void btnAbout_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.AboutCommand);
 
         void btnHire_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.HireCommand);
+
+        void btnUpdate_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.UpdateCommand);
 
         static void Execute(ICommand command)
         {

@@ -81,10 +81,8 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void About_ShowsTheProductAndOpensItsLinks()
         {
-            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"),
-                new Uri("https://boringjob.work/contact/"), new Uri("https://www.linkedin.com/in/developer/"), @"C:\PlaceKit");
             var launcher = new FakeUrlLauncher();
-            var about = new AboutViewModel(product, launcher);
+            var about = new AboutViewModel(TestProduct.Create(), launcher, new FakeDialogs(), () => throw new AssertFailedException("no settings"));
 
             about.OpenWebsiteCommand.Execute(null);
             about.ContactCommand.Execute(null);
@@ -120,6 +118,23 @@ namespace PlaceKit.Tests.ViewModels
             Assert.AreEqual(new Uri("https://boringjob.work"), product.Website);
             Assert.AreEqual(new Uri("https://boringjob.work/contact/"), product.ContactPage);
             Assert.AreEqual("www.linkedin.com", product.LinkedIn.Host);
+            Assert.AreEqual(new Uri("https://boringjob.work/placekit/latest.json"), product.UpdateFeed);
+        }
+
+        [TestMethod]
+        public void About_ChecksForUpdatesOnTheUpdatesPage()
+        {
+            var dialogs = new FakeDialogs();
+            var updates = new FakeUpdateService();
+            var settings = new SettingsViewModel(new MemorySettings(), new MemoryApiKeyStore(), new FakeAiService(), new FakeUrlLauncher(), updates, TestProduct.Create());
+            var about = new AboutViewModel(TestProduct.Create(), new FakeUrlLauncher(), dialogs, () => settings);
+
+            about.CheckForUpdatesCommand.Execute(null);
+
+            Assert.AreSame(settings, dialogs.Shown.Single());
+            Assert.IsTrue(settings.ShowUpdatesPage);
+            Assert.AreEqual(1, updates.Checks);
+            Assert.IsTrue(settings.IsUpToDate);
         }
 
         [TestMethod]

@@ -21,6 +21,8 @@ namespace PlaceKit.Models
 
         public string DetectNote { get; set; } = string.Empty;
 
+        public bool CheckForUpdates { get; set; } = true;
+
         public PlaceholderPattern CreatePattern() => new PlaceholderPattern(OpeningMarker, ClosingMarker);
     }
 }

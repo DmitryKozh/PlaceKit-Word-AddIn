@@ -15,13 +15,14 @@ namespace PlaceKit.Tests.ViewModels
         readonly MemoryApiKeyStore _keys = new MemoryApiKeyStore();
         readonly FakeAiService _ai = new FakeAiService();
         readonly FakeUrlLauncher _urls = new FakeUrlLauncher();
+        readonly FakeUpdateService _updates = new FakeUpdateService();
 
-        SettingsViewModel Create() => new SettingsViewModel(_store, _keys, _ai, _urls);
+        SettingsViewModel Create() => new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create());
 
         [TestMethod]
         public void InvalidMarker_DisablesSave()
         {
-            var settings = new SettingsViewModel(_store, _keys, _ai, _urls) { OpeningMarker = "" };
+            var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create()) { OpeningMarker = "" };
 
             Assert.IsFalse(settings.IsValid);
             Assert.IsNotNull(((IDataErrorInfo)settings)[nameof(SettingsViewModel.OpeningMarker)]);
@@ -33,7 +34,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void Preview_UsesTheMarkers()
         {
-            var settings = new SettingsViewModel(_store, _keys, _ai, _urls) { OpeningMarker = "[[", ClosingMarker = "]]" };
+            var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create()) { OpeningMarker = "[[", ClosingMarker = "]]" };
 
             Assert.AreEqual("[[Client name]]", settings.Preview);
         }
@@ -80,7 +81,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void Save_StoresTheSettingsAndCloses()
         {
-            var settings = new SettingsViewModel(_store, _keys, _ai, _urls)
+            var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create())
             {
                 OpeningMarker = "<<",
                 ClosingMarker = ">>",
@@ -105,7 +106,7 @@ namespace PlaceKit.Tests.ViewModels
         [TestMethod]
         public void Reset_RestoresTheDefaultsWithoutSaving()
         {
-            var settings = new SettingsViewModel(_store, _keys, _ai, _urls) { OpeningMarker = "<<", OpenInWindow = true };
+            var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create()) { OpeningMarker = "<<", OpenInWindow = true };
 
             settings.ResetCommand.Execute(null);
 
@@ -120,13 +121,98 @@ namespace PlaceKit.Tests.ViewModels
             SettingsViewModel settings = Create();
             Assert.IsTrue(settings.ShowGeneralPage);
 
-            settings.SwitchPageCommand.Execute(null);
+            settings.NextPageCommand.Execute(null);
             Assert.IsTrue(settings.ShowAiPage);
+            settings.NextPageCommand.Execute(null);
+            Assert.IsTrue(settings.ShowUpdatesPage);
+            settings.NextPageCommand.Execute(null);
+            Assert.IsTrue(settings.ShowGeneralPage, "Ctrl+Tab goes round");
+            settings.PreviousPageCommand.Execute(null);
+            Assert.IsTrue(settings.ShowUpdatesPage);
 
             // What WPF does when the user clicks General in the list.
             settings.ShowGeneralPage = true;
-            settings.ShowAiPage = false;
+            settings.ShowUpdatesPage = false;
             Assert.IsTrue(settings.ShowGeneralPage);
+            Assert.IsFalse(settings.ShowAiPage || settings.ShowUpdatesPage);
+        }
+
+        [TestMethod]
+        public void CheckNow_SaysWhenThisIsTheLatestVersion()
+        {
+            SettingsViewModel settings = Create();
+            Assert.AreEqual("You have PlaceKit 1.2.3. New versions are published on boringjob.work.", settings.InstalledVersion);
+            StringAssert.StartsWith(settings.UpdatePrivacyNote, "A check asks boringjob.work only for the latest version.");
+
+            settings.CheckNowCommand.Execute(null);
+
+            Assert.AreEqual(1, _updates.Checks);
+            Assert.IsTrue(settings.IsUpToDate);
+            Assert.AreEqual("PlaceKit 1.2.3 is the latest version.", settings.UpdateCheckMessage);
+            Assert.IsFalse(settings.IsUpdateAvailable);
+            Assert.IsFalse(settings.DownloadUpdateCommand.CanExecute(null));
+        }
+
+        [TestMethod]
+        public void CheckNow_OffersTheNewVersion()
+        {
+            _updates.Found = TestRelease.Create("1.3.0");
+            SettingsViewModel settings = Create();
+
+            settings.CheckNowCommand.Execute(null);
+            settings.DownloadUpdateCommand.Execute(null);
+            settings.OpenReleaseNotesCommand.Execute(null);
+
+            Assert.IsTrue(settings.IsUpdateAvailable);
+            Assert.AreEqual("PlaceKit 1.3.0 is available", settings.UpdateHeading);
+            Assert.IsFalse(settings.HasUpdateCheckMessage, "the update shows on its own");
+            CollectionAssert.AreEqual(
+                new[] { "https://boringjob.work/placekit/PlaceKit-1.3.0.msi", "https://boringjob.work/placekit/?utm_source=placekit&utm_medium=add-in&utm_content=update" },
+                _urls.Opened.Select(url => url.AbsoluteUri).ToList());
+        }
+
+        [TestMethod]
+        public void CheckNow_ShowsWhyItFailed()
+        {
+            _updates.Error = new UpdateCheckException("boringjob.work can't be reached.");
+            SettingsViewModel settings = Create();
+
+            settings.CheckNowCommand.Execute(null);
+
+            Assert.AreEqual("boringjob.work can't be reached.", settings.UpdateCheckMessage);
+            Assert.IsFalse(settings.IsUpToDate);
+
+            _updates.Error = new OperationCanceledException();
+            settings.CheckNowCommand.Execute(null);
+            Assert.IsFalse(settings.HasUpdateCheckMessage, "canceled by the user");
+        }
+
+        [TestMethod]
+        public void UpdatesPage_ShowsAnUpdateFoundBefore()
+        {
+            _updates.AvailableUpdate = TestRelease.Create("2.0.0", withInstaller: false);
+            SettingsViewModel settings = Create();
+
+            settings.DownloadUpdateCommand.Execute(null);
+
+            Assert.AreEqual("PlaceKit 2.0.0 is available", settings.UpdateHeading);
+            Assert.AreEqual("https://boringjob.work/placekit/?utm_source=placekit&utm_medium=add-in&utm_content=update", _urls.Opened.Single().AbsoluteUri, "no installer: the page");
+            Assert.AreEqual(0, _updates.Checks);
+        }
+
+        [TestMethod]
+        public void CheckForUpdates_IsLoadedSavedAndReset()
+        {
+            _store.Current.CheckForUpdates = false;
+            SettingsViewModel settings = Create();
+            Assert.IsFalse(settings.CheckForUpdates);
+
+            settings.ResetCommand.Execute(null);
+            Assert.IsTrue(settings.CheckForUpdates);
+
+            settings.CheckForUpdates = false;
+            settings.SaveCommand.Execute(null);
+            Assert.IsFalse(_store.Saved.CheckForUpdates);
         }
 
         [TestMethod]

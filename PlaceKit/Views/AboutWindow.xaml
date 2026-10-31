@@ -57,7 +57,14 @@
                        FontSize="24"
                        FontWeight="SemiBold"
                        Text="{Binding Product.Name}" />
-            <TextBlock HorizontalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" Text="{Binding VersionText}" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="{Binding VersionText}" />
+                <TextBlock Margin="6,0" Style="{StaticResource SecondaryTextStyle}" Text="&#x00B7;" />
+                <Button Command="{Binding CheckForUpdatesCommand}"
+                        Content="Check for updates"
+                        Style="{StaticResource LinkButtonStyle}"
+                        ToolTip="Opens the Updates page of Settings and checks for a newer version" />
+            </StackPanel>
             <TextBlock Margin="0,16,0,0"
                        Text="{Binding Product.Description}"
                        TextAlignment="Center"

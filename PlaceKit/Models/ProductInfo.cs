@@ -7,7 +7,8 @@ namespace PlaceKit.Models
 {
     public sealed class ProductInfo
     {
-        public ProductInfo(string name, string version, string description, string developer, string copyright, Uri website, Uri contactPage, Uri linkedIn, string installFolder)
+        public ProductInfo(string name, string version, string description, string developer, string copyright, Uri website, Uri contactPage, Uri linkedIn,
+            Uri updateFeed, string installFolder)
         {
             Name = name;
             Version = version;
@@ -17,6 +18,7 @@ namespace PlaceKit.Models
             Website = website;
             ContactPage = contactPage;
             LinkedIn = linkedIn;
+            UpdateFeed = updateFeed;
             LicenseFile = new Uri(Path.Combine(installFolder, "License.txt"));
             NoticesFile = new Uri(Path.Combine(installFolder, "ThirdPartyNotices.txt"));
         }
@@ -36,6 +38,9 @@ namespace PlaceKit.Models
         public Uri ContactPage { get; }
 
         public Uri LinkedIn { get; }
+
+        // The JSON file on the website that names the latest version.
+        public Uri UpdateFeed { get; }
 
         public Uri LicenseFile { get; }
 
@@ -57,6 +62,7 @@ namespace PlaceKit.Models
                 new Uri(GetMetadata(assembly, "Website")),
                 new Uri(GetMetadata(assembly, "ContactPage")),
                 new Uri(GetMetadata(assembly, "LinkedIn")),
+                new Uri(GetMetadata(assembly, "UpdateFeed")),
                 // CodeBase, not Location, which can be a shadow copy
                 Path.GetDirectoryName(new Uri(assembly.CodeBase).LocalPath));
         }

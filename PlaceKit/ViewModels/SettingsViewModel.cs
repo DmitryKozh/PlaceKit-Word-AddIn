@@ -18,42 +18,59 @@ namespace PlaceKit.ViewModels
         readonly IApiKeyStore _apiKeys;
         readonly IAiService _ai;
         readonly IUrlLauncher _urlLauncher;
+        readonly IUpdateService _updates;
+        readonly ProductInfo _product;
         readonly Dictionary<AiProvider, string> _newApiKeys = new Dictionary<AiProvider, string>();
         readonly HashSet<AiProvider> _removedApiKeys = new HashSet<AiProvider>();
 
-        public SettingsViewModel(ISettingsService settingsService, IApiKeyStore apiKeys, IAiService ai, IUrlLauncher urlLauncher)
+        public SettingsViewModel(ISettingsService settingsService, IApiKeyStore apiKeys, IAiService ai, IUrlLauncher urlLauncher, IUpdateService updates, ProductInfo product)
             : base("PlaceKit settings")
         {
             _settingsService = settingsService;
             _apiKeys = apiKeys;
             _ai = ai;
             _urlLauncher = urlLauncher;
+            _updates = updates;
+            _product = product;
             StorageLocation = settingsService.Location;
             Apply(settingsService.Load());
             HasSavedApiKey = apiKeys.HasKey(AiProvider);
+            AvailableUpdate = updates.AvailableUpdate;
 
             SaveCommand = new RelayCommand(Save, () => IsValid);
             CancelCommand = new RelayCommand(() => Close(false));
             ResetCommand = new RelayCommand(() => Apply(new PlaceKitSettings()));
-            SwitchPageCommand = new RelayCommand(() => ShowAiPage = !ShowAiPage);
+            NextPageCommand = new RelayCommand(() => Page = (SettingsPage)(((int)Page + 1) % PageCount));
+            PreviousPageCommand = new RelayCommand(() => Page = (SettingsPage)(((int)Page + PageCount - 1) % PageCount));
             RemoveApiKeyCommand = new RelayCommand(RemoveApiKey, () => HasSavedApiKey);
             TestConnectionCommand = new RelayCommand(TestConnection, () => HasNewApiKey || HasSavedApiKey);
             OpenApiKeysPageCommand = new RelayCommand(() => _urlLauncher.Open(AiProviders.KeysPage(AiProvider)));
+            CheckNowCommand = new RelayCommand(CheckNow);
+            DownloadUpdateCommand = new RelayCommand(() => _urlLauncher.Open(AvailableUpdate.Installer ?? ReleaseNotes()), () => IsUpdateAvailable);
+            OpenReleaseNotesCommand = new RelayCommand(() => _urlLauncher.Open(ReleaseNotes()), () => IsUpdateAvailable);
         }
 
-        public bool ShowAiPage { get; set; }
+        static int PageCount => Enum.GetValues(typeof(SettingsPage)).Length;
 
-        // ignore false from the other page's button
+        public SettingsPage Page { get; set; }
+
+        // The list's radio buttons: ignore false from the other pages' buttons.
         public bool ShowGeneralPage
         {
-            get => !ShowAiPage;
-            set
-            {
-                if (value)
-                {
-                    ShowAiPage = false;
-                }
-            }
+            get => Page == SettingsPage.General;
+            set => ShowPage(value, SettingsPage.General);
+        }
+
+        public bool ShowAiPage
+        {
+            get => Page == SettingsPage.Ai;
+            set => ShowPage(value, SettingsPage.Ai);
+        }
+
+        public bool ShowUpdatesPage
+        {
+            get => Page == SettingsPage.Updates;
+            set => ShowPage(value, SettingsPage.Updates);
         }
 
         public string OpeningMarker { get; set; }
@@ -138,6 +155,25 @@ namespace PlaceKit.ViewModels
 
         public bool HasConnectionMessage => ConnectionMessage != null;
 
+        public bool CheckForUpdates { get; set; }
+
+        public string InstalledVersion => $"You have PlaceKit {_product.Version}. New versions are published on {_product.UpdateFeed.Host}.";
+
+        public string UpdatePrivacyNote => $"A check asks {_product.UpdateFeed.Host} only for the latest version. Nothing from your documents or settings is sent.";
+
+        public ReleaseInfo AvailableUpdate { get; private set; }
+
+        public bool IsUpdateAvailable => AvailableUpdate != null;
+
+        public string UpdateHeading => IsUpdateAvailable ? $"PlaceKit {AvailableUpdate.VersionText} is available" : null;
+
+        // The result of Check now, unless it found an update, which shows on its own.
+        public string UpdateCheckMessage { get; private set; }
+
+        public bool IsUpToDate { get; private set; }
+
+        public bool HasUpdateCheckMessage => UpdateCheckMessage != null;
+
         public bool IsValid =>
             PlaceholderPattern.ValidateMarker(OpeningMarker) == null && PlaceholderPattern.ValidateMarker(ClosingMarker) == null;
 
@@ -151,13 +187,21 @@ namespace PlaceKit.ViewModels
 
         public ICommand ResetCommand { get; }
 
-        public ICommand SwitchPageCommand { get; }
+        public ICommand NextPageCommand { get; }
+
+        public ICommand PreviousPageCommand { get; }
 
         public ICommand RemoveApiKeyCommand { get; }
 
         public ICommand TestConnectionCommand { get; }
 
         public ICommand OpenApiKeysPageCommand { get; }
+
+        public ICommand CheckNowCommand { get; }
+
+        public ICommand DownloadUpdateCommand { get; }
+
+        public ICommand OpenReleaseNotesCommand { get; }
 
         string IDataErrorInfo.Error => null;
 
@@ -195,6 +239,15 @@ namespace PlaceKit.ViewModels
             AskAboutEmptyPlaceholders = settings.AskAboutEmptyPlaceholders;
             EmptyPlaceholderAction = settings.EmptyPlaceholderAction;
             AiProvider = settings.AiProvider;
+            CheckForUpdates = settings.CheckForUpdates;
+        }
+
+        void ShowPage(bool isChecked, SettingsPage page)
+        {
+            if (isChecked)
+            {
+                Page = page;
+            }
         }
 
         void SetPlacement(bool isChecked, EditorPlacement placement)
@@ -255,6 +308,34 @@ namespace PlaceKit.ViewModels
             }
         }
 
+        Uri ReleaseNotes() => _product.Link(AvailableUpdate.Page, "update");
+
+        void CheckNow()
+        {
+            try
+            {
+                AvailableUpdate = _updates.Check();
+                IsUpToDate = AvailableUpdate == null;
+                UpdateCheckMessage = IsUpToDate ? $"PlaceKit {_product.Version} is the latest version." : null;
+            }
+            catch (UpdateCheckException ex)
+            {
+                UpdateCheckMessage = ex.Message;
+                IsUpToDate = false;
+            }
+            catch (OperationCanceledException)
+            {
+                UpdateCheckMessage = null;
+            }
+            catch (Exception ex)
+            {
+                // Exceptions must not reach Office from a dialog's command.
+                Trace.TraceError("PlaceKit: {0}", ex);
+                UpdateCheckMessage = $"The check failed: {ex.Message}";
+                IsUpToDate = false;
+            }
+        }
+
         // Start from what's saved, to keep settings this window doesn't show (the Detect note).
         void Save()
         {
@@ -267,6 +348,7 @@ namespace PlaceKit.ViewModels
             settings.AskAboutEmptyPlaceholders = AskAboutEmptyPlaceholders;
             settings.EmptyPlaceholderAction = EmptyPlaceholderAction;
             settings.AiProvider = AiProvider;
+            settings.CheckForUpdates = CheckForUpdates;
             _settingsService.Save(settings);
 
             foreach (AiProvider provider in AiProviders.All)

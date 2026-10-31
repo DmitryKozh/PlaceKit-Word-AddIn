@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Input;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
@@ -7,10 +8,17 @@ namespace PlaceKit.ViewModels
 {
     public sealed class AboutViewModel : DialogViewModelBase
     {
-        public AboutViewModel(ProductInfo product, IUrlLauncher urlLauncher)
+        public AboutViewModel(ProductInfo product, IUrlLauncher urlLauncher, IDialogService dialogs, Func<SettingsViewModel> createSettings)
             : base("About " + product.Name)
         {
             Product = product;
+            CheckForUpdatesCommand = new RelayCommand(() => dialogs.RunAndReportErrors(() =>
+            {
+                SettingsViewModel settings = createSettings();
+                settings.ShowUpdatesPage = true;
+                settings.CheckNowCommand.Execute(null);
+                dialogs.ShowDialog(settings);
+            }));
             OpenWebsiteCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.Website, "about")));
             ContactCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.ContactPage, "about")));
             OpenLinkedInCommand = new RelayCommand(() => urlLauncher.Open(product.LinkedIn));
@@ -28,6 +36,8 @@ namespace PlaceKit.ViewModels
 
         public string Introduction =>
             $"PlaceKit is a sample of my work. I'm {Product.Developer}, a C# and .NET developer with 11 years of experience, and I take the boring jobs off your desk.";
+
+        public ICommand CheckForUpdatesCommand { get; }
 
         public ICommand OpenWebsiteCommand { get; }
 

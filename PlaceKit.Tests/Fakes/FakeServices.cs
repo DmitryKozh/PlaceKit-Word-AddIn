@@ -37,6 +37,7 @@ namespace PlaceKit.Tests.Fakes
             to.EmptyPlaceholderAction = from.EmptyPlaceholderAction;
             to.AiProvider = from.AiProvider;
             to.DetectNote = from.DetectNote;
+            to.CheckForUpdates = from.CheckForUpdates;
             return to;
         }
     }
@@ -277,6 +278,82 @@ namespace PlaceKit.Tests.Fakes
             }
 
             return Values;
+        }
+    }
+
+    static class TestProduct
+    {
+        public static ProductInfo Create(string version = "1.2.3") => new ProductInfo("PlaceKit", version, "Description", "Developer", "Copyright",
+            new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"), new Uri("https://www.linkedin.com/in/developer/"),
+            new Uri("https://boringjob.work/placekit/latest.json"), @"C:\PlaceKit");
+    }
+
+    static class TestRelease
+    {
+        public static ReleaseInfo Create(string version, bool withInstaller = true) => new ReleaseInfo(
+            Version.Parse(version),
+            new Uri("https://boringjob.work/placekit/"),
+            withInstaller ? new Uri($"https://boringjob.work/placekit/PlaceKit-{version}.msi") : null);
+    }
+
+    sealed class FakeReleaseSource : IReleaseSource
+    {
+        public ReleaseInfo Latest { get; set; }
+
+        public Exception Error { get; set; }
+
+        public int Calls { get; private set; }
+
+        public System.Threading.Tasks.Task<ReleaseInfo> GetLatestAsync(CancellationToken token)
+        {
+            Calls++;
+            return Error != null ? System.Threading.Tasks.Task.FromException<ReleaseInfo>(Error) : System.Threading.Tasks.Task.FromResult(Latest);
+        }
+    }
+
+    sealed class FakeUpdateService : IUpdateService
+    {
+        public ReleaseInfo AvailableUpdate { get; set; }
+
+        // What Check finds; null means this is the latest version.
+        public ReleaseInfo Found { get; set; }
+
+        public Exception Error { get; set; }
+
+        public int Checks { get; private set; }
+
+        public event EventHandler AvailableUpdateChanged;
+
+        public ReleaseInfo Check()
+        {
+            Checks++;
+            if (Error != null)
+            {
+                throw Error;
+            }
+
+            Announce(Found);
+            return Found;
+        }
+
+        public System.Threading.Tasks.Task CheckInBackgroundAsync() => System.Threading.Tasks.Task.CompletedTask;
+
+        public void Announce(ReleaseInfo update)
+        {
+            AvailableUpdate = update;
+            AvailableUpdateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    // Runs what is posted at once and counts it, in place of Word's thread.
+    sealed class InlineSynchronizationContext : SynchronizationContext
+    {
+        public int Posts { get; private set; }
+
+        public override void Post(SendOrPostCallback callback, object state)
+        {
+            Posts++;
+            callback(state);
         }
     }
 }

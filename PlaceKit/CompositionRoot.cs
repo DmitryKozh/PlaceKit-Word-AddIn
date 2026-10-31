@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Office.Tools;
 using PlaceKit.Interfaces;
@@ -33,6 +35,11 @@ namespace PlaceKit
             services.AddSingleton<IAiService, AiService>();
             services.AddSingleton<IValueFinder, ValueFinder>();
             services.AddSingleton<IPlaceholderDetector, PlaceholderDetector>();
+            services.AddSingleton<IReleaseSource, WebsiteReleaseSource>();
+            services.AddSingleton<IUpdateService, UpdateService>();
+
+            // Build runs on Word's thread, where background work hands its results back.
+            services.AddSingleton<SynchronizationContext>(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();

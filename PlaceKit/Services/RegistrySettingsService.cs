@@ -17,6 +17,7 @@ namespace PlaceKit.Services
         const string EmptyPlaceholderActionValue = "EmptyPlaceholderAction";
         const string AiProviderValue = "AiProvider";
         const string DetectNoteValue = "DetectNote";
+        const string CheckForUpdatesValue = "CheckForUpdates";
 
         readonly string _keyPath;
 
@@ -51,6 +52,7 @@ namespace PlaceKit.Services
                 settings.EmptyPlaceholderAction = ReadEnum(key, EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction);
                 settings.AiProvider = ReadEnum(key, AiProviderValue, settings.AiProvider);
                 settings.DetectNote = key.GetValue(DetectNoteValue) as string ?? settings.DetectNote;
+                settings.CheckForUpdates = ReadFlag(key, CheckForUpdatesValue, settings.CheckForUpdates);
             }
 
             return settings;
@@ -69,6 +71,7 @@ namespace PlaceKit.Services
                 key.SetValue(EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction.ToString(), RegistryValueKind.String);
                 key.SetValue(AiProviderValue, settings.AiProvider.ToString(), RegistryValueKind.String);
                 key.SetValue(DetectNoteValue, settings.DetectNote ?? string.Empty, RegistryValueKind.String);
+                key.SetValue(CheckForUpdatesValue, settings.CheckForUpdates ? 1 : 0, RegistryValueKind.DWord);
             }
         }
 

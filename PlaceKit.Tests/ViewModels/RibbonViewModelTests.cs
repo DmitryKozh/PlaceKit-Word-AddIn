@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
@@ -14,14 +14,15 @@ namespace PlaceKit.Tests.ViewModels
         readonly MemorySettings _settings = new MemorySettings();
         readonly FakeGuide _guide = new FakeGuide();
         readonly FakeUrlLauncher _launcher = new FakeUrlLauncher();
+        readonly FakeDialogs _dialogs = new FakeDialogs();
+        readonly FakeUpdateService _updates = new FakeUpdateService();
         RibbonViewModel _ribbon;
 
         [TestInitialize]
         public void CreateRibbon()
         {
-            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"),
-                new Uri("https://boringjob.work/contact/"), new Uri("https://www.linkedin.com/in/developer/"), @"C:\PlaceKit");
-            _ribbon = new RibbonViewModel(null, null, _settings, new FakeDialogs(), null, null, _guide, new FakeAiService(), new FakeDetector(), product, _launcher);
+            _ribbon = new RibbonViewModel(null, null, _settings, _dialogs, null, null, _guide, new FakeAiService(), new FakeDetector(), TestProduct.Create(), _launcher,
+                _updates, () => new SettingsViewModel(_settings, new MemoryApiKeyStore(), new FakeAiService(), _launcher, _updates, TestProduct.Create()));
         }
 
         [TestMethod]
@@ -41,6 +42,36 @@ namespace PlaceKit.Tests.ViewModels
             _ribbon.HireCommand.Execute(null);
 
             Assert.AreEqual("https://boringjob.work/?utm_source=placekit&utm_medium=add-in&utm_content=ribbon", _launcher.Opened.Single().AbsoluteUri);
+        }
+
+        [TestMethod]
+        public void UpdateButton_FollowsTheUpdateService()
+        {
+            var changed = new List<string>();
+            _ribbon.PropertyChanged += (sender, e) => changed.Add(e.PropertyName);
+            Assert.IsFalse(_ribbon.IsUpdateAvailable);
+
+            _updates.Announce(TestRelease.Create("1.3.0"));
+
+            Assert.IsTrue(_ribbon.IsUpdateAvailable);
+            Assert.AreEqual("PlaceKit 1.3.0 is available", _ribbon.UpdateTip);
+            CollectionAssert.Contains(changed, nameof(RibbonViewModel.IsUpdateAvailable));
+
+            _updates.Announce(null);
+            Assert.IsFalse(_ribbon.IsUpdateAvailable);
+        }
+
+        [TestMethod]
+        public void Update_OpensTheUpdatesPage()
+        {
+            _updates.Announce(TestRelease.Create("1.3.0"));
+
+            _ribbon.UpdateCommand.Execute(null);
+
+            var settings = (SettingsViewModel)_dialogs.Shown.Single();
+            Assert.IsTrue(settings.ShowUpdatesPage);
+            Assert.IsTrue(settings.IsUpdateAvailable);
+            Assert.AreEqual(0, _updates.Checks, "the update is known already");
         }
     }
 }

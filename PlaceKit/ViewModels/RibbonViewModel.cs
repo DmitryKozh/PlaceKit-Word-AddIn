@@ -10,7 +10,7 @@ using Word = Microsoft.Office.Interop.Word;
 
 namespace PlaceKit.ViewModels
 {
-    public sealed class RibbonViewModel
+    public sealed class RibbonViewModel : ViewModelBase
     {
         const string Caption = "PlaceKit";
 
@@ -23,9 +23,10 @@ namespace PlaceKit.ViewModels
         readonly IGuideService _guide;
         readonly IAiService _ai;
         readonly IPlaceholderDetector _detector;
+        readonly Func<SettingsViewModel> _createSettings;
 
         public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors, IGuideService guide,
-            IAiService ai, IPlaceholderDetector detector, ProductInfo product, IUrlLauncher urlLauncher)
+            IAiService ai, IPlaceholderDetector detector, ProductInfo product, IUrlLauncher urlLauncher, IUpdateService updates, Func<SettingsViewModel> createSettings)
         {
             _wordHost = wordHost;
             _placeholders = placeholders;
@@ -36,6 +37,9 @@ namespace PlaceKit.ViewModels
             _guide = guide;
             _ai = ai;
             _detector = detector;
+            _createSettings = createSettings;
+            AvailableUpdate = updates.AvailableUpdate;
+            updates.AvailableUpdateChanged += (sender, e) => AvailableUpdate = updates.AvailableUpdate;
 
             CreateCommand = new RelayCommand(() => Run(CreatePlaceholders));
             DetectCommand = new RelayCommand(() => Run(DetectPlaceholders));
@@ -45,7 +49,15 @@ namespace PlaceKit.ViewModels
             SettingsCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<SettingsViewModel>()));
             AboutCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<AboutViewModel>()));
             HireCommand = new RelayCommand(() => Run(() => urlLauncher.Open(product.Link(product.Website, "ribbon"))));
+            UpdateCommand = new RelayCommand(() => Run(ShowUpdate));
         }
+
+        // The Update button shows only while a newer version is out.
+        public ReleaseInfo AvailableUpdate { get; private set; }
+
+        public bool IsUpdateAvailable => AvailableUpdate != null;
+
+        public string UpdateTip => IsUpdateAvailable ? $"PlaceKit {AvailableUpdate.VersionText} is available" : null;
 
         public ICommand CreateCommand { get; }
 
@@ -62,6 +74,15 @@ namespace PlaceKit.ViewModels
         public ICommand AboutCommand { get; }
 
         public ICommand HireCommand { get; }
+
+        public ICommand UpdateCommand { get; }
+
+        void ShowUpdate()
+        {
+            SettingsViewModel settings = _createSettings();
+            settings.ShowUpdatesPage = true;
+            _dialogs.ShowDialog(settings);
+        }
 
         void CreatePlaceholders()
         {

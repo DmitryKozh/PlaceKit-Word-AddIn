@@ -44,6 +44,7 @@
             this.btnGuide = this.Factory.CreateRibbonButton();
             this.btnSettings = this.Factory.CreateRibbonButton();
             this.btnAbout = this.Factory.CreateRibbonButton();
+            this.btnUpdate = this.Factory.CreateRibbonButton();
             this.grpBoringJob = this.Factory.CreateRibbonGroup();
             this.btnHire = this.Factory.CreateRibbonButton();
             this.tabPlaceKit.SuspendLayout();
@@ -118,6 +119,7 @@
             this.grpGeneral.Items.Add(this.btnGuide);
             this.grpGeneral.Items.Add(this.btnSettings);
             this.grpGeneral.Items.Add(this.btnAbout);
+            this.grpGeneral.Items.Add(this.btnUpdate);
             this.grpGeneral.Label = "General";
             this.grpGeneral.Name = "grpGeneral";
             // 
@@ -151,7 +153,18 @@
             this.btnAbout.ShowImage = true;
             this.btnAbout.SuperTip = "Version, developer and website.";
             this.btnAbout.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnAbout_Click);
-            // 
+            //
+            // btnUpdate
+            //
+            this.btnUpdate.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnUpdate.Label = "Update";
+            this.btnUpdate.Name = "btnUpdate";
+            this.btnUpdate.ScreenTip = "A new version is available";
+            this.btnUpdate.ShowImage = true;
+            this.btnUpdate.SuperTip = "Download the new version of PlaceKit. Close Word before you run the installer; your settings and API keys stay.";
+            this.btnUpdate.Visible = false;
+            this.btnUpdate.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnUpdate_Click);
+            //
             // grpBoringJob
             // 
             this.grpBoringJob.Items.Add(this.btnHire);
@@ -200,6 +213,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnGuide;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnSettings;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnAbout;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnUpdate;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpBoringJob;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnHire;
     }

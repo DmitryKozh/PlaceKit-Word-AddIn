@@ -36,6 +36,15 @@
                 </Style.Triggers>
             </Style>
 
+            <Style x:Key="UpdatesPageStyle" TargetType="StackPanel">
+                <Setter Property="Visibility" Value="Hidden" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ShowUpdatesPage}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
             <Style x:Key="ConnectionIconStyle" BasedOn="{StaticResource IconTextStyle}" TargetType="TextBlock">
                 <Setter Property="Text" Value="&#xEA39;" />
                 <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
@@ -46,12 +55,23 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <Style x:Key="UpdateCheckIconStyle" BasedOn="{StaticResource IconTextStyle}" TargetType="TextBlock">
+                <Setter Property="Text" Value="&#xEA39;" />
+                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsUpToDate}" Value="True">
+                        <Setter Property="Text" Value="&#xE73E;" />
+                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
-        <KeyBinding Key="Tab" Command="{Binding SwitchPageCommand}" Modifiers="Control" />
-        <KeyBinding Key="Tab" Command="{Binding SwitchPageCommand}" Modifiers="Control+Shift" />
+        <KeyBinding Key="Tab" Command="{Binding NextPageCommand}" Modifiers="Control" />
+        <KeyBinding Key="Tab" Command="{Binding PreviousPageCommand}" Modifiers="Control+Shift" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -94,6 +114,12 @@
                                  IsChecked="{Binding ShowAiPage}"
                                  Style="{StaticResource NavigationItemStyle}"
                                  Tag="&#xE82F;" />
+                    <RadioButton Margin="0,4,0,0"
+                                 Content="Updates"
+                                 GroupName="Page"
+                                 IsChecked="{Binding ShowUpdatesPage}"
+                                 Style="{StaticResource NavigationItemStyle}"
+                                 Tag="&#xE895;" />
                 </StackPanel>
             </Border>
 
@@ -234,6 +260,59 @@
                     </Grid>
 
                     <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding PrivacyNote}" />
+                </StackPanel>
+
+                <StackPanel Margin="{StaticResource DialogPadding}" Style="{StaticResource UpdatesPageStyle}">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="Updates" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="{Binding InstalledVersion}" />
+                    <CheckBox Margin="0,12,0,0" Content="Check for _updates when Word starts" IsChecked="{Binding CheckForUpdates}" />
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="CheckNowButton"
+                                VerticalAlignment="Top"
+                                Command="{Binding CheckNowCommand}"
+                                Content="Check _now"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        <Grid Grid.Column="1"
+                              Margin="12,6,0,0"
+                              VerticalAlignment="Top"
+                              Visibility="{Binding HasUpdateCheckMessage, Converter={StaticResource BooleanToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Margin="0,3,8,0" VerticalAlignment="Top" Style="{StaticResource UpdateCheckIconStyle}" />
+                            <TextBlock Grid.Column="1" Text="{Binding UpdateCheckMessage}" TextWrapping="Wrap" />
+                        </Grid>
+                    </Grid>
+
+                    <Border Margin="0,16,0,0"
+                            Padding="16"
+                            Background="{StaticResource AccentSubtleBrush}"
+                            CornerRadius="4"
+                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibility}}">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="{Binding UpdateHeading}" />
+                            <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="Download the installer, close Word and run it. Your settings and API keys stay." />
+                            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                                <Button x:Name="DownloadButton"
+                                        Command="{Binding DownloadUpdateCommand}"
+                                        Content="_Download"
+                                        Style="{StaticResource SecondaryButtonStyle}" />
+                                <Button Margin="16,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding OpenReleaseNotesCommand}"
+                                        Content="What's new"
+                                        Style="{StaticResource LinkButtonStyle}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding UpdatePrivacyNote}" />
                 </StackPanel>
             </Grid>
         </Grid>

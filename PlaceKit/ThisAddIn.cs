@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Office.Tools.Ribbon;
+using PlaceKit.Interfaces;
 using PlaceKit.Tools;
 using PlaceKit.ViewModels;
 
@@ -18,6 +19,12 @@ namespace PlaceKit
             return new IRibbonExtension[] { new PlaceKitRibbon(_services.GetRequiredService<RibbonViewModel>()) };
         }
 
+        // Word doesn't wait for the answer; the Update button appears when one is out.
+        void ThisAddIn_Startup(object sender, System.EventArgs e)
+        {
+            _ = _services?.GetRequiredService<IUpdateService>().CheckInBackgroundAsync();
+        }
+
         void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
             _services?.Dispose();
@@ -31,6 +38,7 @@ namespace PlaceKit
         /// </summary>
         void InternalStartup()
         {
+            this.Startup += new System.EventHandler(ThisAddIn_Startup);
             this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
         }
 

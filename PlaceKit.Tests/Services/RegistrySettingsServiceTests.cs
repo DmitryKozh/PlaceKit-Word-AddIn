@@ -37,6 +37,7 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(EditorPlacement.SidePanel, settings.EditorPlacement);
             Assert.IsTrue(settings.AskAboutEmptyPlaceholders);
             Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, settings.EmptyPlaceholderAction);
+            Assert.IsTrue(settings.CheckForUpdates);
         }
 
         [TestMethod]
@@ -53,6 +54,7 @@ namespace PlaceKit.Tests.Services
                 EmptyPlaceholderAction = EmptyPlaceholderAction.Delete,
                 AiProvider = AiProvider.OpenAI,
                 DetectNote = "Only names,\nin English",
+                CheckForUpdates = false,
             });
 
             PlaceKitSettings loaded = _store.Load();
@@ -66,6 +68,7 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(EmptyPlaceholderAction.Delete, loaded.EmptyPlaceholderAction);
             Assert.AreEqual(AiProvider.OpenAI, loaded.AiProvider);
             Assert.AreEqual("Only names,\nin English", loaded.DetectNote);
+            Assert.IsFalse(loaded.CheckForUpdates);
         }
 
         [TestMethod]
