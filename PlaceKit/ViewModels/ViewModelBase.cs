@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace PlaceKit.ViewModels
 {
-    // PropertyChanged.Fody injects the notifications into the property setters.
+    // PropertyChanged.Fody fills in the notifications and calls On<Property>Changed methods.
     public abstract class ViewModelBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;

@@ -8,7 +8,6 @@ using Drawn = PlaceKit.IconRenderer;
 
 namespace PlaceKit.Tests.Views
 {
-    // The image strips the add-in ships, drawn by PlaceKit.IconRenderer.
     [TestClass]
     public class RibbonImagesTests
     {

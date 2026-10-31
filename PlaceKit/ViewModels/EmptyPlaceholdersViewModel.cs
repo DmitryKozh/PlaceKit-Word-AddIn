@@ -7,7 +7,6 @@ using PlaceKit.Tools;
 
 namespace PlaceKit.ViewModels
 {
-    // Asked by Finalize when some placeholders are not filled in. Closes with true and a Choice, or false to cancel.
     public sealed class EmptyPlaceholdersViewModel : DialogViewModelBase
     {
         const int ShownNames = 5;

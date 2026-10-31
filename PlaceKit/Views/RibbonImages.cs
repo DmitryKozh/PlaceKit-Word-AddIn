@@ -7,8 +7,7 @@ using System.Linq;
 
 namespace PlaceKit.Views
 {
-    // The ribbon images, drawn by the PlaceKit.IconRenderer tool: for each Office theme and common screen scale
-    // a strip with the icons side by side in RibbonIcon order. Loading one is much cheaper at startup than drawing.
+    // Strips drawn by PlaceKit.IconRenderer, one per theme and scale; loading is cheaper than drawing at startup.
     internal static class RibbonImages
     {
         // 100, 125, 150, 175, 200, 250 and 300 %

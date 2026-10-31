@@ -7,8 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace PlaceKit.IconRenderer
 {
-    // Writes PlaceKit\Resources\RibbonIcons: for each Office theme and common screen scale, a strip with the icons
-    // side by side in RibbonIcon order, named like Dark48.png. Also writes the installer's PlaceKit.ico.
+    // Writes the ribbon strips (PlaceKit\Resources\RibbonIcons\Dark48.png and so on) and the installer's PlaceKit.ico.
     static class Program
     {
         // 100, 125, 150, 175, 200, 250 and 300 %, as PlaceKit.Views.RibbonImages expects them.
@@ -48,9 +47,8 @@ namespace PlaceKit.IconRenderer
             return 0;
         }
 
-        // The pictures of the setup wizard: Dialog.bmp behind its first and last pages, with the PlaceKit braces on a band
-        // on the left, and Banner.bmp at the top of the other pages, with the About tile on the right. Windows Installer
-        // stretches them to the page, so they are drawn for 200 % and get smaller on smaller scales.
+        // Setup wizard pictures: Dialog.bmp for the first and last page, Banner.bmp for the top of the others.
+        // Windows Installer stretches them, so they're drawn at 200 %.
         static string[] WriteWizardImages(string folder)
         {
             const double scale = 2;
@@ -88,8 +86,7 @@ namespace PlaceKit.IconRenderer
             return new[] { dialog, banner };
         }
 
-        // As an 8-bit bitmap: the package keeps the pictures uncompressed, and with only the band, white and the blends
-        // between them they have far fewer than 256 colours, so a palette holds them all.
+        // 8-bit: the MSI stores them uncompressed, and they have far fewer than 256 colours.
         static void SaveIndexed(Bitmap image, string path)
         {
             BitmapData source = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -145,8 +142,7 @@ namespace PlaceKit.IconRenderer
             }
         }
 
-        // The About tile, at the sizes Windows shows in Programs and Features and Explorer. The images are PNG,
-        // which .ico files may hold since Windows Vista.
+        // The About tile as PNG images, which .ico files can hold since Vista.
         static void WriteIcon(string path)
         {
             int[] sizes = { 16, 20, 24, 32, 40, 48, 64, 256 };

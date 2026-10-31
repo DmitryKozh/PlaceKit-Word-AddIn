@@ -7,7 +7,6 @@ using PlaceKit.IconRenderer;
 
 namespace PlaceKit.Tests.Views
 {
-    // The vector shapes PlaceKit.IconRenderer draws the ribbon images from.
     [TestClass]
     public class RibbonIconsTests
     {

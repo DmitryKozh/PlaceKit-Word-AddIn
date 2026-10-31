@@ -9,7 +9,6 @@ namespace PlaceKit.Interfaces
 
         IntPtr MainWindowHandle { get; }
 
-        // Opens a new blank document and makes it the active one.
         Word.Document NewDocument();
     }
 }

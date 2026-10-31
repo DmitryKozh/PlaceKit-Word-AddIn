@@ -6,9 +6,7 @@ using Word = Microsoft.Office.Interop.Word;
 
 namespace PlaceKit.Services
 {
-    // What PlaceKit is for, the three steps, and a warranty claim with placeholders in the body, a table and the footer.
-    // Customer and Claim number are used three times, to show that the editor lists them once.
-    // The text has no brackets of any kind, so with markers like {{ }}, [[ ]], << >> or % % only the placeholders match.
+    // No brackets in the text, so only the placeholders match, whatever the markers.
     public sealed class GuideService : IGuideService
     {
         readonly IWordHost _wordHost;
@@ -25,7 +23,6 @@ namespace PlaceKit.Services
             document.Sections[1].Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text =
                 $"Warranty claim {pattern.Format("Claim number")} \u00B7 {pattern.Format("Customer")}";
 
-            // This is where the user starts: nothing to undo and nothing to save yet.
             document.UndoClear();
             document.Saved = true;
             return document;
@@ -135,7 +132,7 @@ namespace PlaceKit.Services
             Divider,
             Heading,
 
-            // Columns separated by tabs; the rows in a row become a table.
+            // Tab-separated columns; consecutive rows become a table.
             Row,
         }
     }

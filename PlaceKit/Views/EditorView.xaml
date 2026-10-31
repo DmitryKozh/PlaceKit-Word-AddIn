@@ -127,8 +127,7 @@
         <Border Padding="16,12" DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
             <StackPanel>
                 <TextBlock Margin="0,0,0,10" Style="{StaticResource SecondaryTextStyle}" Text="{Binding Summary}" />
-                <!-- One row on the right in the window. The side panel can be made narrow, so there
-                     Save and Close share the first row and Save and finalize takes the second. -->
+                <!-- In the narrow side panel Save and finalize goes to a second row -->
                 <Grid>
                     <Grid.Style>
                         <Style TargetType="Grid">

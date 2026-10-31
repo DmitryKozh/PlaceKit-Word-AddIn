@@ -13,7 +13,7 @@ namespace PlaceKit.Interfaces
 
         bool Confirm(string title, string message);
 
-        // Return the chosen path, or null when the user cancels.
+        // null on cancel
         string ShowOpenFileDialog(string title, string filter);
 
         string ShowSaveFileDialog(string title, string filter, string fileName);

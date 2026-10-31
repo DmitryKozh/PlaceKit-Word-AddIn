@@ -8,8 +8,7 @@ namespace PlaceKit.Interfaces
 
         void Refresh(Word.Document document);
 
-        // Turns the placeholders into regular text, asking about empty ones unless a choice is remembered,
-        // and closes the document's editor.
+        // Also closes the document's editor.
         void FinalizeDocument(Word.Document document);
     }
 }

@@ -6,8 +6,7 @@ using PlaceKit.Models;
 
 namespace PlaceKit.Services
 {
-    // Next to the settings, encrypted with Windows DPAPI: only the same Windows account can read them back.
-    // Values ClaudeApiKey and OpenAIApiKey.
+    // DPAPI for the current user, values ClaudeApiKey and OpenAIApiKey.
     public sealed class ProtectedApiKeyStore : IApiKeyStore
     {
         const string DefaultKeyPath = @"Software\BoringJob\PlaceKit";
@@ -66,7 +65,7 @@ namespace PlaceKit.Services
 
         static string ValueName(AiProvider provider) => provider + "ApiKey";
 
-        // Each key decrypts only as the key of its own service.
+        // Different entropy per service, so one key can't be read as another.
         static byte[] Entropy(AiProvider provider) => Encoding.UTF8.GetBytes($"PlaceKit {provider} API key");
     }
 }
