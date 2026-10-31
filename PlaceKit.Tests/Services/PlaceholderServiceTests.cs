@@ -107,6 +107,27 @@ namespace PlaceKit.Tests.Services
             CollectionAssert.AreEqual(new[] { "First", "Second" }, WordInstance.PlaceKitControls(document).Select(control => control.Title).ToList());
         }
 
+        // An invalid marker in a cell with more cells after it used to hang Create.
+        [TestMethod]
+        [Timeout(60000)]
+        public void Create_GoesOnAfterMarkersInTableCells()
+        {
+            Word.Document document = WordInstance.NewDocument("Intro");
+            Word.Range end = document.Content;
+            end.Collapse(Word.WdCollapseDirection.wdCollapseEnd);
+            Word.Table table = document.Tables.Add(end, 2, 2);
+            table.Cell(1, 1).Range.Text = "Empty {{}} here";
+            table.Cell(1, 2).Range.Text = "{{Client name}}";
+            table.Cell(2, 1).Range.Text = "{{Order}}";
+            table.Cell(2, 2).Range.Text = "{{Date}}";
+
+            PlaceholderOperationResult result = Create(document);
+
+            Assert.AreEqual(3, result.Processed);
+            Assert.AreEqual(1, result.Skipped);
+            CollectionAssert.AreEqual(new[] { "Client name", "Order", "Date" }, WordInstance.PlaceKitControls(document).Select(control => control.Title).ToList());
+        }
+
         [TestMethod]
         public void Create_SkipsMarkerInsideAnotherPlainTextControl()
         {

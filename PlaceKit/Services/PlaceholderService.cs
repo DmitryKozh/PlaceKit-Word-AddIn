@@ -14,6 +14,8 @@ namespace PlaceKit.Services
 {
     public sealed class PlaceholderService : IPlaceholderService
     {
+        const int WindowNotActive = unchecked((int)0x800A11FD);
+
         public PlaceholderOperationResult CreatePlaceholders(Word.Document document, PlaceholderPattern pattern, IProgress<ProgressInfo> progress, CancellationToken token)
         {
             List<Word.Range> stories = WordStories.GetTextStories(document).ToList();
@@ -83,6 +85,78 @@ namespace PlaceKit.Services
                 placeholder => ConvertToText(placeholder.Control, emptyPlaceholders == EmptyPlaceholderAction.KeepMarkers ? pattern.Format(placeholder.Name) : null));
         }
 
+        public string GetText(Word.Document document, PlaceholderPattern pattern)
+        {
+            // A header linked to the previous section's is the same text again; it would double the counts.
+            HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
+            return string.Join("\n\n", WordStories.GetTextStories(document)
+                .Select(story => ReadText(story, pattern))
+                .Where(text => !string.IsNullOrWhiteSpace(text) && seen.Add(text)));
+        }
+
+        public string GetSelectedText(Word.Document document, PlaceholderPattern pattern)
+        {
+            try
+            {
+                Word.Range selection = document.ActiveWindow.Selection.Range;
+                return selection.Start < selection.End ? ReadText(selection, pattern) : null;
+            }
+            catch (COMException)
+            {
+                // no window, such as a document opened invisibly
+                return null;
+            }
+        }
+
+        public PlaceholderOperationResult CreatePlaceholdersFromText(Word.Document document, IReadOnlyList<DetectedPlaceholder> placeholders, IProgress<ProgressInfo> progress, CancellationToken token)
+        {
+            List<Word.Range> stories = WordStories.GetTextStories(document).ToList();
+            ProgressTracker tracker = new ProgressTracker(placeholders.Count, progress);
+
+            using (WordEditScope.Begin(document, "PlaceKit: Detect placeholders", untracked: true))
+            {
+                // The longest first, so "Anna Berg" becomes a placeholder before "Berg" could take part of it.
+                foreach (DetectedPlaceholder placeholder in placeholders.OrderByDescending(placeholder => placeholder.Text.Length))
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    int found = 0;
+                    int created = 0;
+                    string error = null;
+                    foreach (Word.Range story in stories)
+                    {
+                        created += WrapOccurrences(story, placeholder, ref found, ref error);
+                    }
+
+                    string problem = created > 0 ? null
+                        : found == 0 ? "not in the document as a whole word"
+                        : error != null ? "Word refused: " + error
+                        : "only inside other content controls";
+                    tracker.Add(succeeded: created > 0, problem == null ? null : $"\"{Shorten(placeholder.Text)}\": {problem}");
+                }
+            }
+
+            return tracker.ToResult(token.IsCancellationRequested);
+        }
+
+        public bool SelectText(Word.Document document, string text)
+        {
+            foreach (Word.Range story in WordStories.GetTextStories(document))
+            {
+                Word.Range found = FindWholeWords(story, text).FirstOrDefault();
+                if (found != null)
+                {
+                    found.Select();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public bool SelectPlaceholder(Word.Document document, string name, int occurrence)
         {
             List<PlaceholderControl> matches = FindPlaceholders(document).Where(placeholder => placeholder.Name == name).ToList();
@@ -103,6 +177,47 @@ namespace PlaceKit.Services
             }
         }
 
+        // A content control reads as a marker with its name. Its text can't become a placeholder, so Detect must not
+        // suggest it, and the AI service sees which parts are placeholders already.
+        static string ReadText(Word.Range range, PlaceholderPattern pattern)
+        {
+            StringBuilder text = new StringBuilder();
+            int position = range.Start;
+            foreach (Word.ContentControl control in range.ContentControls.Cast<Word.ContentControl>().OrderBy(control => control.Range.Start).ToList())
+            {
+                // -1 and +1: the control's tags
+                int start = control.Range.Start - 1;
+                if (start < position)
+                {
+                    continue;
+                }
+
+                text.Append(TextBetween(range, position, start));
+                text.Append(pattern.Format(NameOf(control)));
+                position = Math.Min(control.Range.End + 1, range.End);
+            }
+
+            text.Append(TextBetween(range, position, range.End));
+            return WordText.ToPlain(text.ToString());
+        }
+
+        static string TextBetween(Word.Range range, int start, int end)
+        {
+            if (start >= end)
+            {
+                return string.Empty;
+            }
+
+            Word.Range part = range.Duplicate;
+            part.SetRange(start, end);
+            return part.Text ?? string.Empty;
+        }
+
+        static string NameOf(Word.ContentControl control) =>
+            PlaceholderTag.TryGetName(control.Tag, out string name) ? name
+            : !string.IsNullOrWhiteSpace(control.Title) ? control.Title
+            : "Field";
+
         static void ConvertMarkers(Word.Range story, PlaceholderPattern pattern, ProgressTracker tracker, CancellationToken token)
         {
             Word.Range range = story.Duplicate;
@@ -114,14 +229,20 @@ namespace PlaceKit.Services
             find.Format = false;
             find.Wrap = Word.WdFindWrap.wdFindStop;
 
-            // Search the rest of the story explicitly: a collapsed range inside the new
-            // control would only search inside that control.
+            int searchFrom = range.Start;
             while (!token.IsCancellationRequested && find.Execute())
             {
                 int matchStart = range.Start;
                 int resumeAt;
 
-                if (pattern.TryGetName(range.Text, out string name) && TryCreateControl(range, name, out Word.ContentControl control))
+                // Never go back, or this would loop forever.
+                if (matchStart < searchFrom)
+                {
+                    Trace.TraceWarning("PlaceKit: the search for markers went back from {0} to {1}", searchFrom, matchStart);
+                    break;
+                }
+
+                if (pattern.TryGetName(range.Text, out string name) && TryCreateControl(range, name, out Word.ContentControl control, out _))
                 {
                     tracker.Add(succeeded: true);
 
@@ -135,22 +256,104 @@ namespace PlaceKit.Services
                     resumeAt = matchStart + pattern.Opening.Length;
                 }
 
-                range.SetRange(Math.Min(resumeAt, story.End), story.End);
+                searchFrom = ContinueAt(range, resumeAt, story);
             }
         }
 
-        static bool TryCreateControl(Word.Range marker, string name, out Word.ContentControl control)
+        // Text inside another content control is left alone.
+        static int WrapOccurrences(Word.Range story, DetectedPlaceholder placeholder, ref int matches, ref string error)
+        {
+            int created = 0;
+            foreach (Word.Range found in FindWholeWords(story, placeholder.Text))
+            {
+                matches++;
+                if (found.ParentContentControl != null || found.ContentControls.Count > 0)
+                {
+                    continue;
+                }
+
+                if (TryCreateControl(found, placeholder.Name, out _, out string failure, keepText: true))
+                {
+                    created++;
+                }
+                else
+                {
+                    error = failure;
+                }
+            }
+
+            return created;
+        }
+
+        // Word's "whole words only" fails for text with spaces, so the neighbours are checked here.
+        // Each match is yielded before moving on, so the caller can wrap it in a control.
+        static IEnumerable<Word.Range> FindWholeWords(Word.Range story, string text)
+        {
+            Word.Range range = story.Duplicate;
+            Word.Find find = range.Find;
+            find.ClearFormatting();
+            find.Text = text.Replace("^", "^^");
+            find.MatchCase = true;
+            find.MatchWholeWord = false;
+            find.MatchWildcards = false;
+            find.Forward = true;
+            find.Format = false;
+            find.Wrap = Word.WdFindWrap.wdFindStop;
+
+            int searchFrom = range.Start;
+            while (find.Execute())
+            {
+                // Never go back, or this would loop forever.
+                if (range.Start < searchFrom)
+                {
+                    Trace.TraceWarning("PlaceKit: the search for '{0}' went back from {1} to {2}", text, searchFrom, range.Start);
+                    yield break;
+                }
+
+                if (IsWholeWord(range, text))
+                {
+                    yield return range;
+                }
+
+                searchFrom = ContinueAt(range, range.End, story);
+            }
+        }
+
+        // Continue from an insertion point. A range up to the story end gets widened to whole table rows,
+        // and Find keeps returning the same match.
+        static int ContinueAt(Word.Range range, int position, Word.Range story)
+        {
+            int at = Math.Min(position, story.End);
+            range.SetRange(at, at);
+            return at;
+        }
+
+        static bool IsWholeWord(Word.Range found, string text)
+        {
+            Word.Range before = found.Duplicate;
+            before.SetRange(Math.Max(0, found.Start - 1), found.Start);
+            Word.Range after = found.Duplicate;
+            after.SetRange(found.End, found.End + 1);
+            string around = CharacterOf(before) + text + CharacterOf(after);
+            return WordText.IsWholeWord(around, 1, text.Length);
+        }
+
+        // keepText: the text becomes the value; otherwise the control starts empty (markers).
+        static bool TryCreateControl(Word.Range range, string name, out Word.ContentControl control, out string error, bool keepText = false)
         {
             try
             {
-                control = marker.ContentControls.Add(Word.WdContentControlType.wdContentControlText, marker);
+                control = AddControl(range);
             }
             catch (COMException ex)
             {
                 Trace.TraceWarning("PlaceKit: cannot create placeholder '{0}': {1}", name, ex.Message);
                 control = null;
+                error = ex.Message;
                 return false;
             }
+
+            error = null;
 
             control.Tag = PlaceholderTag.Create(name);
             control.Title = name;
@@ -158,9 +361,43 @@ namespace PlaceKit.Services
             control.SetPlaceholderText(Text: name);
 
             // An empty control shows its placeholder text.
-            control.Range.Text = string.Empty;
+            if (!keepText)
+            {
+                control.Range.Text = string.Empty;
+            }
+
             return true;
         }
+
+        // Word refuses to add a control while its document window isn't the active one (error 4605), so activate
+        // the window and try once more.
+        static Word.ContentControl AddControl(Word.Range range)
+        {
+            try
+            {
+                return range.ContentControls.Add(Word.WdContentControlType.wdContentControlText, range);
+            }
+            catch (COMException ex) when (ex.ErrorCode == WindowNotActive && TryActivateWindow(range.Document))
+            {
+                return range.ContentControls.Add(Word.WdContentControlType.wdContentControlText, range);
+            }
+        }
+
+        static bool TryActivateWindow(Word.Document document)
+        {
+            try
+            {
+                document.ActiveWindow.Activate();
+                return true;
+            }
+            catch (COMException)
+            {
+                // a document opened without a window
+                return false;
+            }
+        }
+
+        static string Shorten(string text) => text.Length <= 60 ? text : text.Substring(0, 57) + "...";
 
         static string ReadValue(Word.ContentControl control) =>
             control.ShowingPlaceholderText ? string.Empty : WordText.ToDisplay(TextWithoutDeletions(control.Range));

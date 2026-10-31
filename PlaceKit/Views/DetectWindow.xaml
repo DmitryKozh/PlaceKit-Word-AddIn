@@ -1,0 +1,180 @@
+<Window x:Class="PlaceKit.Views.DetectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:PlaceKit.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:DetectViewModel}"
+        Title="{Binding Title}"
+        Width="680"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=NoteBox}"
+        Style="{DynamicResource DialogWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Hidden, not Collapsed, so both steps keep one height -->
+            <Style x:Key="ScanStepStyle" TargetType="FrameworkElement">
+                <Setter Property="Visibility" Value="Hidden" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsScanStep}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="ReviewStepStyle" TargetType="FrameworkElement">
+                <Setter Property="Visibility" Value="Hidden" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsReviewStep}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <DataTemplate x:Key="SuggestionTemplate" DataType="vm:DetectedItemViewModel">
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <CheckBox VerticalAlignment="Center"
+                              AutomationProperties.Name="{Binding Text, StringFormat='Make {0} a placeholder'}"
+                              IsChecked="{Binding IsChosen}" />
+                    <TextBox Grid.Column="1"
+                             Margin="8,0,0,0"
+                             AutomationProperties.Name="Placeholder name"
+                             IsEnabled="{Binding IsChosen}"
+                             Tag="Name"
+                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text}" />
+                        <TextBlock FontSize="12"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding Reason}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding Reason}" />
+                    </StackPanel>
+                    <Border Grid.Column="3"
+                            Margin="8,0,0,0"
+                            Padding="6,0,6,1"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource ControlPressedBrush}"
+                            CornerRadius="8"
+                            ToolTip="{Binding UsesHint}">
+                        <TextBlock FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding UsesText}" />
+                    </Border>
+                    <Button Grid.Column="4"
+                            Margin="4,0,0,0"
+                            AutomationProperties.Name="Show in the document"
+                            Command="{Binding DataContext.ShowCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Content="&#xE890;"
+                            Style="{StaticResource IconButtonStyle}"
+                            ToolTip="Show in the document" />
+                </Grid>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Margin="0,0,8,0"
+                        Command="{Binding BackCommand}"
+                        Content="_Back"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Visibility="{Binding IsReviewStep, Converter={StaticResource BooleanToVisibility}}" />
+                <Button Command="{Binding FindCommand}"
+                        Content="_Find placeholders"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Visibility="{Binding IsScanStep, Converter={StaticResource BooleanToVisibility}}" />
+                <Button Command="{Binding CreateCommand}"
+                        Content="{Binding CreateText}"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Visibility="{Binding IsReviewStep, Converter={StaticResource BooleanToVisibility}}" />
+                <Button Margin="8,0,0,0"
+                        Command="{Binding CancelCommand}"
+                        Content="Cancel"
+                        Style="{StaticResource SecondaryButtonStyle}" />
+            </StackPanel>
+        </Border>
+
+        <Grid Height="392" Margin="{StaticResource DialogPadding}">
+            <StackPanel Style="{StaticResource ScanStepStyle}">
+                <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="{Binding Intro}" />
+
+                <StackPanel Margin="0,16,0,0" Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibility}}">
+                    <RadioButton Content="{Binding DocumentSize}" GroupName="Scope" IsChecked="{Binding ScanDocument}" />
+                    <RadioButton Margin="0,8,0,0"
+                                 Content="{Binding SelectionSize}"
+                                 GroupName="Scope"
+                                 IsChecked="{Binding ScanSelection}" />
+                </StackPanel>
+
+                <Label Margin="0,16,0,0" Content="{Binding NoteLabel}" Target="{Binding ElementName=NoteBox}" />
+                <TextBox x:Name="NoteBox"
+                         Height="96"
+                         VerticalContentAlignment="Top"
+                         AcceptsReturn="True"
+                         Tag="What to look for, and how to name the placeholders"
+                         Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto" />
+                <TextBlock Margin="0,4,0,0" Style="{StaticResource CaptionTextStyle}" Text="For example: client names, dates and amounts, but not our own address. Name the placeholders in English. The note is kept for next time." />
+                <TextBlock Style="{StaticResource ErrorTextStyle}"
+                           Text="{Binding Error}"
+                           Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibility}}" />
+
+                <TextBlock Margin="0,16,0,0" Style="{StaticResource CaptionTextStyle}">
+                    <Run Text="{Binding SendNote, Mode=OneWay}" />
+                    <Hyperlink Command="{Binding ChangeServiceCommand}" Foreground="{StaticResource AccentBrush}">AI settings</Hyperlink>
+                </TextBlock>
+            </StackPanel>
+
+            <DockPanel Style="{StaticResource ReviewStepStyle}">
+                <TextBlock DockPanel.Dock="Top" Style="{StaticResource SecondaryTextStyle}" Text="{Binding ReviewIntro}" />
+                <Grid Margin="28,16,0,6" DockPanel.Dock="Top">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource CaptionTextStyle}" Text="Placeholder" />
+                    <TextBlock Grid.Column="1" Margin="16,0,0,0" Style="{StaticResource CaptionTextStyle}" Text="Text in the document" />
+                </Grid>
+                <TextBlock DockPanel.Dock="Bottom"
+                           Style="{StaticResource ErrorTextStyle}"
+                           Text="{Binding Error}"
+                           Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibility}}" />
+                <ItemsControl Focusable="False"
+                              ItemTemplate="{StaticResource SuggestionTemplate}"
+                              ItemsSource="{Binding Items}"
+                              KeyboardNavigation.TabNavigation="Continue">
+                    <ItemsControl.Template>
+                        <ControlTemplate TargetType="ItemsControl">
+                            <ScrollViewer Focusable="False"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          Style="{StaticResource OverlayScrollViewerStyle}"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ItemsPresenter Margin="0,0,10,0" />
+                            </ScrollViewer>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
+                </ItemsControl>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>

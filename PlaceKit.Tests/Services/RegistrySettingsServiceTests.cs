@@ -52,6 +52,7 @@ namespace PlaceKit.Tests.Services
                 AskAboutEmptyPlaceholders = false,
                 EmptyPlaceholderAction = EmptyPlaceholderAction.Delete,
                 AiProvider = AiProvider.OpenAI,
+                DetectNote = "Only names,\nin English",
             });
 
             PlaceKitSettings loaded = _store.Load();
@@ -64,6 +65,7 @@ namespace PlaceKit.Tests.Services
             Assert.IsFalse(loaded.AskAboutEmptyPlaceholders);
             Assert.AreEqual(EmptyPlaceholderAction.Delete, loaded.EmptyPlaceholderAction);
             Assert.AreEqual(AiProvider.OpenAI, loaded.AiProvider);
+            Assert.AreEqual("Only names,\nin English", loaded.DetectNote);
         }
 
         [TestMethod]
@@ -88,6 +90,7 @@ namespace PlaceKit.Tests.Services
                 key.SetValue("EditorPlacement", "7");
                 key.SetValue("EmptyPlaceholderAction", "Shred");
                 key.SetValue("AiProvider", "Gemini");
+                key.SetValue("DetectNote", 42, RegistryValueKind.DWord);
             }
 
             PlaceKitSettings settings = _store.Load();
@@ -98,6 +101,7 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(EditorPlacement.SidePanel, settings.EditorPlacement);
             Assert.AreEqual(EmptyPlaceholderAction.KeepMarkers, settings.EmptyPlaceholderAction);
             Assert.AreEqual(AiProvider.Claude, settings.AiProvider);
+            Assert.AreEqual("", settings.DetectNote);
         }
 
         [TestMethod]

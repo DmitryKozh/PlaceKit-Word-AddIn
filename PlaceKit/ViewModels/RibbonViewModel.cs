@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Input;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
+using PlaceKit.Services;
 using PlaceKit.Tools;
 using Word = Microsoft.Office.Interop.Word;
 
@@ -18,8 +21,11 @@ namespace PlaceKit.ViewModels
         readonly IProgressService _progress;
         readonly IEditorService _editors;
         readonly IGuideService _guide;
+        readonly IAiService _ai;
+        readonly IPlaceholderDetector _detector;
 
-        public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors, IGuideService guide, ProductInfo product, IUrlLauncher urlLauncher)
+        public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors, IGuideService guide,
+            IAiService ai, IPlaceholderDetector detector, ProductInfo product, IUrlLauncher urlLauncher)
         {
             _wordHost = wordHost;
             _placeholders = placeholders;
@@ -28,8 +34,11 @@ namespace PlaceKit.ViewModels
             _progress = progress;
             _editors = editors;
             _guide = guide;
+            _ai = ai;
+            _detector = detector;
 
             CreateCommand = new RelayCommand(() => Run(CreatePlaceholders));
+            DetectCommand = new RelayCommand(() => Run(DetectPlaceholders));
             FillCommand = new RelayCommand(() => Run(FillPlaceholders));
             FinalizeCommand = new RelayCommand(() => Run(FinalizePlaceholders));
             GuideCommand = new RelayCommand(() => Run(() => _guide.CreateGuide(_settings.Load().CreatePattern())));
@@ -39,6 +48,8 @@ namespace PlaceKit.ViewModels
         }
 
         public ICommand CreateCommand { get; }
+
+        public ICommand DetectCommand { get; }
 
         public ICommand FillCommand { get; }
 
@@ -76,7 +87,8 @@ namespace PlaceKit.ViewModels
                         : $"No placeholders were created: {TextFormat.Quantity(result.Skipped, "marker")} could not be converted.",
                     MessageKind.Information);
             }
-            else if (ShouldOpenEditor(result, settings))
+            else if (ShouldOpenEditor(result, settings,
+                $"{TextFormat.Quantity(result.Skipped, "marker")} skipped: empty, too long, split across lines or inside another control."))
             {
                 _editors.Open(document);
             }
@@ -86,14 +98,80 @@ namespace PlaceKit.ViewModels
             }
         }
 
-        bool ShouldOpenEditor(PlaceholderOperationResult result, PlaceKitSettings settings)
+        void DetectPlaceholders()
+        {
+            if (!TryGetEditableDocument(out Word.Document document) || !_ai.EnsureApiKey("Detect"))
+            {
+                return;
+            }
+
+            IPlaceholderDocument placeholders = new PlaceholderDocument(document, _placeholders, _progress);
+            PlaceholderPattern pattern = _settings.Load().CreatePattern();
+            string text = placeholders.ReadText(pattern);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                ShowMessage("The document has no text to look at.", MessageKind.Information);
+                return;
+            }
+
+            IReadOnlyList<string> existingNames = placeholders.LoadPlaceholders().Select(placeholder => placeholder.Name).ToList();
+            DetectViewModel dialog = new DetectViewModel(placeholders, text, placeholders.ReadSelectedText(pattern), existingNames, _detector, _ai, _settings, _dialogs);
+            if (_dialogs.ShowDialog(dialog) != true)
+            {
+                return;
+            }
+
+            PlaceholderOperationResult result = placeholders.CreatePlaceholders(dialog.Chosen);
+            PlaceKitSettings settings = _settings.Load();
+            string skipped = SkippedSuggestions(result);
+            if (result.WasCanceled)
+            {
+                _editors.Refresh(document);
+                ShowMessage(TextFormat.Canceled(result.Processed, "created"), MessageKind.Information);
+            }
+            else if (result.Processed == 0)
+            {
+                ShowMessage(skipped ?? "No placeholders were created.", MessageKind.Warning);
+            }
+            else
+            {
+                // Without the summary, suggestions that were left out would go unnoticed.
+                if (skipped != null && !settings.ShowCreateSummary)
+                {
+                    ShowMessage(skipped, MessageKind.Warning);
+                }
+
+                if (ShouldOpenEditor(result, settings, skipped))
+                {
+                    _editors.Open(document);
+                }
+                else
+                {
+                    _editors.Refresh(document);
+                }
+            }
+        }
+
+        static string SkippedSuggestions(PlaceholderOperationResult result)
+        {
+            const int Listed = 8;
+            if (result.Skipped == 0)
+            {
+                return null;
+            }
+
+            string more = result.Problems.Count > Listed ? $"\nand {result.Problems.Count - Listed} more" : string.Empty;
+            return $"{TextFormat.Quantity(result.Skipped, "suggestion")} did not become placeholders:\n{string.Join("\n", result.Problems.Take(Listed))}{more}";
+        }
+
+        bool ShouldOpenEditor(PlaceholderOperationResult result, PlaceKitSettings settings, string skippedText)
         {
             if (!settings.ShowCreateSummary)
             {
                 return settings.OpenEditorAfterCreate;
             }
 
-            CreateSummaryViewModel summary = new CreateSummaryViewModel(result);
+            CreateSummaryViewModel summary = new CreateSummaryViewModel(result, skippedText);
             bool? answer = _dialogs.ShowDialog(summary);
 
             // Closing with X is not an answer to remember.

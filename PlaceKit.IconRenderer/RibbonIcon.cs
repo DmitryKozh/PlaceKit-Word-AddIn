@@ -10,5 +10,6 @@ namespace PlaceKit.IconRenderer
         Settings,
         About,
         Hire,
+        Detect,
     }
 }

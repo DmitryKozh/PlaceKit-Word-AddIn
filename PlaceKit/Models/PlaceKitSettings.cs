@@ -19,6 +19,8 @@ namespace PlaceKit.Models
         // keys are in IApiKeyStore
         public AiProvider AiProvider { get; set; } = AiProvider.Claude;
 
+        public string DetectNote { get; set; } = string.Empty;
+
         public PlaceholderPattern CreatePattern() => new PlaceholderPattern(OpeningMarker, ClosingMarker);
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project ToolsVersion="18.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="18.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props" Condition="Exists('..\packages\PropertyChanged.Fody.4.1.0\build\PropertyChanged.Fody.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--
@@ -335,6 +335,7 @@
     <Compile Include="Interfaces\IDialogService.cs" />
     <Compile Include="Interfaces\IEditorService.cs" />
     <Compile Include="Interfaces\IGuideService.cs" />
+    <Compile Include="Interfaces\IPlaceholderDetector.cs" />
     <Compile Include="Interfaces\IPlaceholderDocument.cs" />
     <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\IPlaceholderValuesFile.cs" />
@@ -348,6 +349,7 @@
     <Compile Include="Models\AiProvider.cs" />
     <Compile Include="Models\AiProviders.cs" />
     <Compile Include="Models\AiRequest.cs" />
+    <Compile Include="Models\DetectedPlaceholder.cs" />
     <Compile Include="Models\EditorPlacement.cs" />
     <Compile Include="Models\EmptyPlaceholderAction.cs" />
     <Compile Include="Models\MessageKind.cs" />
@@ -361,10 +363,12 @@
     <Compile Include="Models\AiServiceException.cs" />
     <Compile Include="Services\AiService.cs" />
     <Compile Include="Services\ClaudeClient.cs" />
+    <Compile Include="Services\DetectRequest.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\EditorService.cs" />
     <Compile Include="Services\GuideService.cs" />
     <Compile Include="Services\OpenAIClient.cs" />
+    <Compile Include="Services\PlaceholderDetector.cs" />
     <Compile Include="Services\PlaceholderDocument.cs" />
     <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\PlaceholderValuesFile.cs" />
@@ -391,6 +395,8 @@
     <Compile Include="Tools\WordText.cs" />
     <Compile Include="ViewModels\AboutViewModel.cs" />
     <Compile Include="ViewModels\CreateSummaryViewModel.cs" />
+    <Compile Include="ViewModels\DetectedItemViewModel.cs" />
+    <Compile Include="ViewModels\DetectViewModel.cs" />
     <Compile Include="ViewModels\DialogCloseRequestedEventArgs.cs" />
     <Compile Include="ViewModels\DialogViewModelBase.cs" />
     <Compile Include="ViewModels\EditorViewModel.cs" />
@@ -407,6 +413,9 @@
     </Compile>
     <Compile Include="Views\CreateSummaryWindow.xaml.cs">
       <DependentUpon>CreateSummaryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DetectWindow.xaml.cs">
+      <DependentUpon>DetectWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EditorPaneControl.cs">
       <SubType>UserControl</SubType>
@@ -439,6 +448,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\CreateSummaryWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\DetectWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

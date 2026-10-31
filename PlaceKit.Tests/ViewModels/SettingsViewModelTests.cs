@@ -144,6 +144,18 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Save_KeepsWhatTheWindowDoesNotShow()
+        {
+            _store.Current.DetectNote = "Only names";
+            SettingsViewModel settings = Create();
+            settings.OpeningMarker = "<<";
+
+            settings.SaveCommand.Execute(null);
+
+            Assert.AreEqual("Only names", _store.Saved.DetectNote);
+        }
+
+        [TestMethod]
         public void ApiKeys_AreTypedAndSavedPerService()
         {
             SettingsViewModel settings = Create();

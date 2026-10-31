@@ -36,6 +36,7 @@ namespace PlaceKit.Tests.Fakes
             to.AskAboutEmptyPlaceholders = from.AskAboutEmptyPlaceholders;
             to.EmptyPlaceholderAction = from.EmptyPlaceholderAction;
             to.AiProvider = from.AiProvider;
+            to.DetectNote = from.DetectNote;
             return to;
         }
     }
@@ -185,6 +186,38 @@ namespace PlaceKit.Tests.Fakes
         {
             SettingsOpened++;
             OnOpenSettings();
+        }
+    }
+
+    sealed class FakeDetector : IPlaceholderDetector
+    {
+        public List<DetectedPlaceholder> Found { get; } = new List<DetectedPlaceholder>();
+
+        public Exception Error { get; set; }
+
+        public int Calls { get; private set; }
+
+        public string LastText { get; private set; }
+
+        public string LastDocumentText { get; private set; }
+
+        public string LastNote { get; private set; }
+
+        public IReadOnlyList<string> LastExistingNames { get; private set; }
+
+        public IReadOnlyList<DetectedPlaceholder> Detect(string text, string documentText, string note, IReadOnlyList<string> existingNames)
+        {
+            Calls++;
+            LastText = text;
+            LastDocumentText = documentText;
+            LastNote = note;
+            LastExistingNames = existingNames;
+            if (Error != null)
+            {
+                throw Error;
+            }
+
+            return Found;
         }
     }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PlaceKit.Models;
 
 namespace PlaceKit.Services
@@ -7,6 +8,7 @@ namespace PlaceKit.Services
     {
         readonly int _total;
         readonly IProgress<ProgressInfo> _progress;
+        readonly List<string> _problems = new List<string>();
 
         public ProgressTracker(int total, IProgress<ProgressInfo> progress)
         {
@@ -19,7 +21,7 @@ namespace PlaceKit.Services
 
         public int Skipped { get; private set; }
 
-        public void Add(bool succeeded)
+        public void Add(bool succeeded, string problem = null)
         {
             if (succeeded)
             {
@@ -30,11 +32,16 @@ namespace PlaceKit.Services
                 Skipped++;
             }
 
+            if (problem != null)
+            {
+                _problems.Add(problem);
+            }
+
             int done = Processed + Skipped;
             _progress.Report(new ProgressInfo(done, Math.Max(done, _total)));
         }
 
         public PlaceholderOperationResult ToResult(bool wasCanceled) =>
-            new PlaceholderOperationResult(Processed, Skipped, wasCanceled);
+            new PlaceholderOperationResult(Processed, Skipped, wasCanceled, _problems);
     }
 }

@@ -21,6 +21,7 @@ namespace PlaceKit.Services
             [typeof(EmptyPlaceholdersViewModel)] = () => new EmptyPlaceholdersWindow(),
             [typeof(EditorViewModel)] = () => new EditorWindow(),
             [typeof(FillFromTextViewModel)] = () => new FillFromTextWindow(),
+            [typeof(DetectViewModel)] = () => new DetectWindow(),
             [typeof(SettingsViewModel)] = () => new SettingsWindow(),
             [typeof(AboutViewModel)] = () => new AboutWindow(),
         };
@@ -105,7 +106,7 @@ namespace PlaceKit.Services
             }
         }
 
-        // The WinForms file dialogs accept any window handle as owner, including Word's.
+        // WinForms dialogs take any window handle as owner, Word's too.
         Forms.IWin32Window FileDialogOwner() =>
             new WindowHandle(_openDialogs.Count > 0 ? new WindowInteropHelper(_openDialogs.Peek()).Handle : _wordHost.MainWindowHandle);
 

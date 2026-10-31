@@ -27,5 +27,27 @@ namespace PlaceKit.Tests.Tools
 
             Assert.AreEqual(text, WordText.ToDisplay(WordText.ToWord(text)));
         }
+
+        [TestMethod]
+        public void ToPlain_KeepsTheTextAndLeavesOutWordsMarks()
+        {
+            // a table cell ends with \r\a, a field shows its result between marks 19 to 21
+            Assert.AreEqual("Cell\n\nLine 1\nLine 2\nPage\tTab", WordText.ToPlain("Cell\r\a\rLine 1\vLine 2\fPage\tTab"));
+            Assert.AreEqual("12 October", WordText.ToPlain("\u001312 October\u0015"));
+            Assert.AreEqual("", WordText.ToPlain(null));
+        }
+
+        [DataTestMethod]
+        [DataRow("Dear Anna Berg, Ms Berg.", "Berg", 2)]
+        [DataRow("Bergmann and Berg", "Berg", 1)]
+        [DataRow("order 4711 and 47110", "4711", 1)]
+        [DataRow("(4711)", "(4711)", 1)]
+        [DataRow("x(4711)y", "(4711)", 1)]
+        [DataRow("Anna Berg", "Anna Berg", 1)]
+        [DataRow("", "Berg", 0)]
+        public void CountWholeWords_CountsOnlyWholeWords(string text, string needle, int count)
+        {
+            Assert.AreEqual(count, WordText.CountWholeWords(text, needle));
+        }
     }
 }

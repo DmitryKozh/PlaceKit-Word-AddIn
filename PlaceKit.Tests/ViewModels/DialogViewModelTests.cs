@@ -16,16 +16,17 @@ namespace PlaceKit.Tests.ViewModels
         [DataRow(12, 2, "12 placeholders created")]
         public void Summary_Headline(int created, int skipped, string headline)
         {
-            var summary = new CreateSummaryViewModel(new PlaceholderOperationResult(created, skipped, false));
+            var summary = new CreateSummaryViewModel(new PlaceholderOperationResult(created, skipped, false), "2 markers skipped.");
 
             Assert.AreEqual(headline, summary.Headline);
             Assert.AreEqual(skipped > 0, summary.HasSkipped);
+            Assert.AreEqual("2 markers skipped.", summary.SkippedText);
         }
 
         [TestMethod]
         public void Summary_ClosesWithTheAnswer()
         {
-            var summary = new CreateSummaryViewModel(new PlaceholderOperationResult(3, 0, false));
+            var summary = new CreateSummaryViewModel(new PlaceholderOperationResult(3, 0, false), null);
             bool? answer = null;
             summary.CloseRequested += (sender, e) => answer = e.DialogResult;
 

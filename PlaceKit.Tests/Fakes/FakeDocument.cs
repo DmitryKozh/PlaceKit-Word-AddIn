@@ -46,6 +46,30 @@ namespace PlaceKit.Tests.Fakes
             Selected.Add(name + "#" + occurrence);
             return SelectResult;
         }
+
+        public string Text { get; set; } = string.Empty;
+
+        public string SelectedText { get; set; }
+
+        public List<IReadOnlyList<DetectedPlaceholder>> Created { get; } = new List<IReadOnlyList<DetectedPlaceholder>>();
+
+        public List<string> SelectedTexts { get; } = new List<string>();
+
+        public string ReadText(PlaceholderPattern pattern) => Text;
+
+        public string ReadSelectedText(PlaceholderPattern pattern) => SelectedText;
+
+        public PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders)
+        {
+            Created.Add(placeholders);
+            return new PlaceholderOperationResult(placeholders.Count, 0, false);
+        }
+
+        public bool SelectText(string text)
+        {
+            SelectedTexts.Add(text);
+            return SelectResult;
+        }
     }
 
     sealed class FailingDocument : IPlaceholderDocument
@@ -57,5 +81,13 @@ namespace PlaceKit.Tests.Fakes
         public PlaceholderOperationResult SavePlaceholders(IReadOnlyDictionary<string, string> values) => throw new InvalidOperationException("boom");
 
         public bool SelectPlaceholder(string name, int occurrence) => throw new InvalidOperationException("boom");
+
+        public string ReadText(PlaceholderPattern pattern) => throw new InvalidOperationException("boom");
+
+        public string ReadSelectedText(PlaceholderPattern pattern) => throw new InvalidOperationException("boom");
+
+        public PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders) => throw new InvalidOperationException("boom");
+
+        public bool SelectText(string text) => throw new InvalidOperationException("boom");
     }
 }

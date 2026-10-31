@@ -37,6 +37,7 @@
             this.tabPlaceKit = this.Factory.CreateRibbonTab();
             this.grpPlaceholders = this.Factory.CreateRibbonGroup();
             this.btnCreate = this.Factory.CreateRibbonButton();
+            this.btnDetect = this.Factory.CreateRibbonButton();
             this.btnFill = this.Factory.CreateRibbonButton();
             this.btnFinalize = this.Factory.CreateRibbonButton();
             this.grpGeneral = this.Factory.CreateRibbonGroup();
@@ -62,6 +63,7 @@
             // grpPlaceholders
             // 
             this.grpPlaceholders.Items.Add(this.btnCreate);
+            this.grpPlaceholders.Items.Add(this.btnDetect);
             this.grpPlaceholders.Items.Add(this.btnFill);
             this.grpPlaceholders.Items.Add(this.btnFinalize);
             this.grpPlaceholders.Label = "Placeholders";
@@ -77,6 +79,17 @@
             this.btnCreate.SuperTip = "Turn every {{text}} marker in the document into a content control that you can fi" +
     "ll in later.";
             this.btnCreate.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnCreate_Click);
+            //
+            // btnDetect
+            //
+            this.btnDetect.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnDetect.Label = "Detect";
+            this.btnDetect.Name = "btnDetect";
+            this.btnDetect.ScreenTip = "Detect placeholders";
+            this.btnDetect.ShowImage = true;
+            this.btnDetect.SuperTip = "Let Claude or ChatGPT find the parts of a finished document that change from one u" +
+    "se to the next, such as names, dates and amounts. You choose which become placeholders.";
+            this.btnDetect.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnDetect_Click);
             // 
             // btnFill
             // 
@@ -180,6 +193,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tabPlaceKit;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpPlaceholders;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnCreate;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnDetect;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnFill;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnFinalize;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpGeneral;

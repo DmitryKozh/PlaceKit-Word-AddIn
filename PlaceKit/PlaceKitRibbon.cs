@@ -24,7 +24,7 @@ namespace PlaceKit
             }
             catch (Exception ex)
             {
-                // The icons are only cosmetic: the tab must load even without them.
+                // Icons are cosmetic; the tab must load without them.
                 Trace.TraceError("PlaceKit: cannot load the ribbon images: {0}", ex);
                 SetOfficeImages();
             }
@@ -39,10 +39,11 @@ namespace PlaceKit
             }
         }
 
-        // Chosen once for the theme Word starts with; another theme chosen later shows after a restart.
+        // A theme change shows after a restart.
         void SetImages(IReadOnlyDictionary<RibbonIcon, Bitmap> images)
         {
             btnCreate.Image = images[RibbonIcon.Create];
+            btnDetect.Image = images[RibbonIcon.Detect];
             btnFill.Image = images[RibbonIcon.Fill];
             btnFinalize.Image = images[RibbonIcon.Finalize];
             btnGuide.Image = images[RibbonIcon.Guide];
@@ -54,6 +55,7 @@ namespace PlaceKit
         void SetOfficeImages()
         {
             btnCreate.OfficeImageId = "ContentControlText";
+            btnDetect.OfficeImageId = "FindDialog";
             btnFill.OfficeImageId = "EditDocument";
             btnFinalize.OfficeImageId = "ReviewAcceptChange";
             btnGuide.OfficeImageId = "Help";
@@ -63,6 +65,8 @@ namespace PlaceKit
         }
 
         void btnCreate_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.CreateCommand);
+
+        void btnDetect_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.DetectCommand);
 
         void btnFill_Click(object sender, RibbonControlEventArgs e) => Execute(_viewModel.FillCommand);
 

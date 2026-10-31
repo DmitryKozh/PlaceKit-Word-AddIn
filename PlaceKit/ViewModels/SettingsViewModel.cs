@@ -130,7 +130,7 @@ namespace PlaceKit.ViewModels
 
         public string ApiKeysPageLink => AiProviders.KeysPageLink(AiProvider);
 
-        public string PrivacyNote => $"Text goes to {AiProviders.Company(AiProvider)} only when you use From text, and {AiProviders.Company(AiProvider)} bills your API key for it.";
+        public string PrivacyNote => $"Text goes to {AiProviders.Company(AiProvider)} only when you use From text or Detect, and {AiProviders.Company(AiProvider)} bills your API key for it.";
 
         public string ConnectionMessage { get; private set; }
 
@@ -255,7 +255,7 @@ namespace PlaceKit.ViewModels
             }
         }
 
-        // Start from what's saved, to keep settings this window doesn't show.
+        // Start from what's saved, to keep settings this window doesn't show (the Detect note).
         void Save()
         {
             PlaceKitSettings settings = _settingsService.Load();

@@ -6,11 +6,12 @@ namespace PlaceKit.ViewModels
 {
     public sealed class CreateSummaryViewModel : DialogViewModelBase
     {
-        public CreateSummaryViewModel(PlaceholderOperationResult result)
+        public CreateSummaryViewModel(PlaceholderOperationResult result, string skippedText)
             : base("Placeholders created")
         {
             CreatedCount = result.Processed;
             SkippedCount = result.Skipped;
+            SkippedText = skippedText;
             OpenEditorCommand = new RelayCommand(() => Close(true));
             NotNowCommand = new RelayCommand(() => Close(false));
         }
@@ -23,8 +24,7 @@ namespace PlaceKit.ViewModels
 
         public string Headline => $"{TextFormat.Quantity(CreatedCount, "placeholder")} created";
 
-        public string SkippedText =>
-            $"{TextFormat.Quantity(SkippedCount, "marker")} skipped: empty, too long, split across lines or inside another control.";
+        public string SkippedText { get; }
 
         public bool RememberChoice { get; set; }
 

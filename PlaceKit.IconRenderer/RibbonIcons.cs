@@ -9,8 +9,7 @@ using static System.FormattableString;
 
 namespace PlaceKit.IconRenderer
 {
-    // The ribbon icons as vector shapes, drawn for a screen scale in the colours of an Office theme. Program renders
-    // them into the image strips the add-in ships. Like Office's own icons they use a 32 x 32 grid with 1-unit lines on half units.
+    // Ribbon icons as vector shapes on Office's 32 x 32 grid, with 1-unit lines on half units.
     public sealed class RibbonIcons
     {
         // The About tile, as Office's Word blue.
@@ -31,6 +30,14 @@ namespace PlaceKit.IconRenderer
             {
                 Shape.Solid(Path("M0,0 L4.5,-2.5 V2.5 Z", -45, 12.5, 29.5), Ink.Accent),
                 Shape.Solid(Path("M5.5,-2.5 H15 A2.5,2.5 0 0 1 15,2.5 H5.5 Z", -45, 12.5, 29.5), Ink.Accent),
+            });
+
+        static readonly Icon DetectIcon = new Icon(
+            new[] { Braces() },
+            new[]
+            {
+                Shape.Outline(Path("M18,22.5 A4.5,4.5 0 1 1 27,22.5 A4.5,4.5 0 1 1 18,22.5 Z"), Ink.Accent, 2),
+                Shape.Outline(Path("M26,26 L29.5,29.5"), Ink.Accent, 2),
             });
 
         static readonly Icon FinalizeIcon = new Icon(
@@ -109,6 +116,8 @@ namespace PlaceKit.IconRenderer
                     return AboutIcon;
                 case RibbonIcon.Hire:
                     return HireIcon;
+                case RibbonIcon.Detect:
+                    return DetectIcon;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(icon));
             }

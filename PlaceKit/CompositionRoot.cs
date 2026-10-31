@@ -32,6 +32,7 @@ namespace PlaceKit
             services.AddSingleton<IAiClient, OpenAIClient>();
             services.AddSingleton<IAiService, AiService>();
             services.AddSingleton<IValueFinder, ValueFinder>();
+            services.AddSingleton<IPlaceholderDetector, PlaceholderDetector>();
 
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();

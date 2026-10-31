@@ -20,7 +20,7 @@ namespace PlaceKit.Tests.ViewModels
         public void CreateRibbon()
         {
             var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"));
-            _ribbon = new RibbonViewModel(null, null, _settings, new FakeDialogs(), null, null, _guide, product, _launcher);
+            _ribbon = new RibbonViewModel(null, null, _settings, new FakeDialogs(), null, null, _guide, new FakeAiService(), new FakeDetector(), product, _launcher);
         }
 
         [TestMethod]

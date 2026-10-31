@@ -180,7 +180,7 @@
 
                 <StackPanel Margin="{StaticResource DialogPadding}" Style="{StaticResource AiPageStyle}">
                     <TextBlock Style="{StaticResource SectionTextStyle}" Text="AI service" />
-                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="From text finds placeholder values in a text you paste, such as an email. It uses an AI service with your own API key." />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="From text finds placeholder values in a text you paste, and Detect finds the parts of a document that should become placeholders. Both use an AI service with your own API key." />
                     <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
                         <RadioButton Content="_Claude by Anthropic" GroupName="AiProvider" IsChecked="{Binding UseClaude}" />
                         <RadioButton Margin="24,0,0,0"

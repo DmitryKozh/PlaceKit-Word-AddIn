@@ -10,6 +10,7 @@
         Width="440"
         Height="176"
         SizeToContent="Manual"
+        ShowActivated="False"
         Topmost="True"
         Style="{DynamicResource DialogWindowStyle}">
     <Window.Resources>

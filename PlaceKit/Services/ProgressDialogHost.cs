@@ -60,7 +60,7 @@ namespace PlaceKit.Services
             _thread.Join(ShutdownTimeout);
             _started.Dispose();
 
-            // The window took the focus, give it back to Word.
+            // The window shows without the focus, which Word needs for some commands, but a click may have taken it.
             if (_wasShown && _ownerWindow != IntPtr.Zero)
             {
                 NativeMethods.SetForegroundWindow(_ownerWindow);

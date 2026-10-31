@@ -1,6 +1,6 @@
 namespace PlaceKit.Views
 {
-    // The images of the ribbon buttons. PlaceKit.IconRenderer draws them in this order.
+    // Same order as the image strips.
     public enum RibbonIcon
     {
         Create,
@@ -10,5 +10,6 @@ namespace PlaceKit.Views
         Settings,
         About,
         Hire,
+        Detect,
     }
 }

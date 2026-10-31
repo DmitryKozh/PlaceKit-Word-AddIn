@@ -16,6 +16,7 @@ namespace PlaceKit.Services
         const string AskAboutEmptyPlaceholdersValue = "AskAboutEmptyPlaceholders";
         const string EmptyPlaceholderActionValue = "EmptyPlaceholderAction";
         const string AiProviderValue = "AiProvider";
+        const string DetectNoteValue = "DetectNote";
 
         readonly string _keyPath;
 
@@ -49,6 +50,7 @@ namespace PlaceKit.Services
                 settings.AskAboutEmptyPlaceholders = ReadFlag(key, AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders);
                 settings.EmptyPlaceholderAction = ReadEnum(key, EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction);
                 settings.AiProvider = ReadEnum(key, AiProviderValue, settings.AiProvider);
+                settings.DetectNote = key.GetValue(DetectNoteValue) as string ?? settings.DetectNote;
             }
 
             return settings;
@@ -66,6 +68,7 @@ namespace PlaceKit.Services
                 key.SetValue(AskAboutEmptyPlaceholdersValue, settings.AskAboutEmptyPlaceholders ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue(EmptyPlaceholderActionValue, settings.EmptyPlaceholderAction.ToString(), RegistryValueKind.String);
                 key.SetValue(AiProviderValue, settings.AiProvider.ToString(), RegistryValueKind.String);
+                key.SetValue(DetectNoteValue, settings.DetectNote ?? string.Empty, RegistryValueKind.String);
             }
         }
 
