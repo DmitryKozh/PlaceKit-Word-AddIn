@@ -106,8 +106,7 @@ namespace PlaceKit.ViewModels
             }
 
             IPlaceholderDocument placeholders = new PlaceholderDocument(document, _placeholders, _progress);
-            PlaceholderPattern pattern = _settings.Load().CreatePattern();
-            string text = placeholders.ReadText(pattern);
+            string text = placeholders.ReadText();
             if (string.IsNullOrWhiteSpace(text))
             {
                 ShowMessage("The document has no text to look at.", MessageKind.Information);
@@ -115,7 +114,7 @@ namespace PlaceKit.ViewModels
             }
 
             IReadOnlyList<string> existingNames = placeholders.LoadPlaceholders().Select(placeholder => placeholder.Name).ToList();
-            DetectViewModel dialog = new DetectViewModel(placeholders, text, placeholders.ReadSelectedText(pattern), existingNames, _detector, _ai, _settings, _dialogs);
+            DetectViewModel dialog = new DetectViewModel(placeholders, text, placeholders.ReadSelectedText(), existingNames, _detector, _ai, _settings, _dialogs);
             if (_dialogs.ShowDialog(dialog) != true)
             {
                 return;

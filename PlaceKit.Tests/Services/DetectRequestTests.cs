@@ -87,24 +87,24 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
-        public void Prompt_HoldsTheNoteTheExistingNamesAndTheDocument()
+        public void Prompt_HoldsTheNoteTheExistingNamesTheMarkersAndTheDocument()
         {
-            string prompt = DetectRequest.CreatePrompt("The text", "  Only names. ", new[] { "Client name", "Date" });
+            string prompt = DetectRequest.CreatePrompt("The text", "  Only names. ", new[] { "Client name", "Date" }, new PlaceholderPattern("[[", "]]"));
 
             StringAssert.StartsWith(prompt, "<note>\r\nOnly names.\r\n</note>\r\n\r\n<existing_placeholders>\r\nClient name\r\nDate\r\n</existing_placeholders>");
-            StringAssert.EndsWith(prompt, "<document>\r\nThe text\r\n</document>");
+            StringAssert.EndsWith(prompt, "<markers>\r\n[[name]]\r\n</markers>\r\n\r\n<document>\r\nThe text\r\n</document>");
         }
 
         [TestMethod]
         public void Prompt_LeavesOutAnEmptyNoteAndNoNames()
         {
-            Assert.AreEqual("<document>\r\nThe text\r\n</document>", DetectRequest.CreatePrompt("The text", " ", NoNames));
+            Assert.AreEqual("<markers>\r\n{{name}}\r\n</markers>\r\n\r\n<document>\r\nThe text\r\n</document>", DetectRequest.CreatePrompt("The text", " ", NoNames, PlaceholderPattern.Default));
         }
 
         [TestMethod]
         public void Request_ThinksMoreThanFromText()
         {
-            Assert.AreEqual(AiEffort.Medium, DetectRequest.Create("text", "", NoNames).Effort);
+            Assert.AreEqual(AiEffort.Medium, DetectRequest.Create("text", "", NoNames, PlaceholderPattern.Default).Effort);
             Assert.AreEqual(AiEffort.Low, ValueRequest.Create("text", new[] { "Name" }).Effort);
         }
 

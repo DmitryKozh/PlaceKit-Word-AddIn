@@ -20,11 +20,21 @@ namespace PlaceKit.ViewModels
 
         public string Reason => _placeholder.Reason;
 
+        public bool IsMarker => _placeholder.IsMarker;
+
         public string UsesText => _placeholder.Occurrences == 1 ? "once" : $"{_placeholder.Occurrences} times";
 
-        public string UsesHint => _placeholder.Occurrences == 1
-            ? "The text is in the document once."
-            : $"The text is in the document {_placeholder.Occurrences} times; each becomes this placeholder.";
+        public string UsesHint
+        {
+            get
+            {
+                string what = IsMarker ? "marker" : "text";
+                string becomes = IsMarker ? "this placeholder, empty" : "this placeholder";
+                return _placeholder.Occurrences == 1
+                    ? $"The {what} is in the document once."
+                    : $"The {what} is in the document {_placeholder.Occurrences} times; each becomes {becomes}.";
+            }
+        }
 
         public DetectedPlaceholder ToPlaceholder() => _placeholder.WithName(Name.Trim());
     }

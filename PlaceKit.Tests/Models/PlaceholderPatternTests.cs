@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
 
@@ -28,6 +29,16 @@ namespace PlaceKit.Tests.Models
         {
             Assert.IsFalse(PlaceholderPattern.Default.TryGetName(text, out string name));
             Assert.IsNull(name);
+        }
+
+        [TestMethod]
+        public void FindMarkers_ListsEachMarkerOnceWithItsName()
+        {
+            var markers = PlaceholderPattern.Default.FindMarkers("Dear {{Customer}}, {{ Order }} and {{Customer}}.\nBroken {{x {{Date}}, empty {{}}, open {{y");
+
+            CollectionAssert.AreEqual(new[] { "Customer|{{Customer}}", "Order|{{ Order }}", "Date|{{Date}}" },
+                markers.Select(marker => marker.Name + "|" + marker.Text).ToList());
+            Assert.AreEqual("a|%a%,b|%b%", string.Join(",", new PlaceholderPattern("%", "%").FindMarkers("%a% and %b%").Select(marker => marker.Name + "|" + marker.Text)));
         }
 
         [TestMethod]

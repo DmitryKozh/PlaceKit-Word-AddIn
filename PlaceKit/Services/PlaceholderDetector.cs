@@ -13,7 +13,7 @@ namespace PlaceKit.Services
             _ai = ai;
         }
 
-        public IReadOnlyList<DetectedPlaceholder> Detect(string text, string documentText, string note, IReadOnlyList<string> existingNames) =>
-            DetectRequest.Parse(_ai.Send(DetectRequest.Create(text, note, existingNames), "Detecting placeholders"), documentText, existingNames);
+        public IReadOnlyList<DetectedPlaceholder> Detect(string text, string documentText, string note, IReadOnlyList<string> existingNames, PlaceholderPattern markers) =>
+            DetectRequest.Parse(_ai.Send(DetectRequest.Create(text, note, existingNames, markers), "Detecting placeholders"), documentText, existingNames);
     }
 }

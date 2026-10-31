@@ -55,9 +55,9 @@ namespace PlaceKit.Tests.Fakes
 
         public List<string> SelectedTexts { get; } = new List<string>();
 
-        public string ReadText(PlaceholderPattern pattern) => Text;
+        public string ReadText() => Text;
 
-        public string ReadSelectedText(PlaceholderPattern pattern) => SelectedText;
+        public string ReadSelectedText() => SelectedText;
 
         public PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders)
         {
@@ -82,9 +82,9 @@ namespace PlaceKit.Tests.Fakes
 
         public bool SelectPlaceholder(string name, int occurrence) => throw new InvalidOperationException("boom");
 
-        public string ReadText(PlaceholderPattern pattern) => throw new InvalidOperationException("boom");
+        public string ReadText() => throw new InvalidOperationException("boom");
 
-        public string ReadSelectedText(PlaceholderPattern pattern) => throw new InvalidOperationException("boom");
+        public string ReadSelectedText() => throw new InvalidOperationException("boom");
 
         public PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders) => throw new InvalidOperationException("boom");
 

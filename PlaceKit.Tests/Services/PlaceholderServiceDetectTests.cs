@@ -23,7 +23,7 @@ namespace PlaceKit.Tests.Services
         {
             Word.Document document = SampleDocument();
 
-            string text = _service.GetText(document, PlaceholderPattern.Default);
+            string text = _service.GetText(document);
 
             StringAssert.Contains(text, "Dear Anna Berg, your order 4711 ships on 12 October 2026.\nMs Berg");
             StringAssert.Contains(text, "Contoso Ltd");
@@ -38,17 +38,18 @@ namespace PlaceKit.Tests.Services
             Word.Document document = WordInstance.NewDocument("Anna Berg");
             document.Range(0, 0).Select();
 
-            Assert.IsNull(_service.GetSelectedText(document, PlaceholderPattern.Default));
+            Assert.IsNull(_service.GetSelectedText(document));
 
             document.Range(5, 9).Select();
-            Assert.AreEqual("Berg", _service.GetSelectedText(document, PlaceholderPattern.Default));
+            Assert.AreEqual("Berg", _service.GetSelectedText(document));
         }
 
-        // Text in a content control can't become a placeholder, so the AI service must not suggest it again.
+        // Text in a content control can't become a placeholder, so the AI service must not suggest it again. Markers
+        // still to convert stay as they are.
         [TestMethod]
-        public void GetText_ShowsContentControlsAsMarkers()
+        public void GetText_ShowsContentControlsAsPlaceholderTags()
         {
-            Word.Document document = WordInstance.NewDocument("Dear Anna Berg, order 4711 of Contoso Ltd.");
+            Word.Document document = WordInstance.NewDocument("Dear Anna Berg, order 4711 of Contoso Ltd. {{Date}}");
             Word.Range company = document.Range(30, 41);
             company.ContentControls.Add(Word.WdContentControlType.wdContentControlRichText, company);
             Word.Range order = document.Range(22, 26);
@@ -57,15 +58,14 @@ namespace PlaceKit.Tests.Services
             document.Sections[1].Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text = "Anna Berg";
             Create(document, ("Client name", "Anna Berg"));
 
-            string text = _service.GetText(document, PlaceholderPattern.Default);
+            string text = _service.GetText(document);
 
-            StringAssert.StartsWith(text, "Dear {{Client name}}, order {{Order}} of {{Field}}.");
-            StringAssert.Contains(text, "\n{{Client name}}", "the footer");
+            StringAssert.StartsWith(text, "Dear <placeholder name=\"Client name\"/>, order <placeholder name=\"Order\"/> of <placeholder name=\"Field\"/>. {{Date}}");
+            StringAssert.Contains(text, "\n<placeholder name=\"Client name\"/>", "the footer");
             Assert.IsFalse(text.Contains("Anna Berg") || text.Contains("4711") || text.Contains("Contoso"));
-            StringAssert.StartsWith(_service.GetText(document, new PlaceholderPattern("[[", "]]")), "Dear [[Client name]], order [[Order]]");
 
             document.Range(0, orderControl.Range.End + 1).Select();
-            Assert.AreEqual("Dear {{Client name}}, order {{Order}}", _service.GetSelectedText(document, PlaceholderPattern.Default));
+            Assert.AreEqual("Dear <placeholder name=\"Client name\"/>, order <placeholder name=\"Order\"/>", _service.GetSelectedText(document));
         }
 
         [TestMethod]
@@ -135,7 +135,7 @@ namespace PlaceKit.Tests.Services
         {
             Word.Document document = new GuideService(new HiddenWordHost()).CreateGuide(PlaceholderPattern.Default);
             _service.CreatePlaceholders(document, PlaceholderPattern.Default, _progress, CancellationToken.None);
-            string text = _service.GetText(document, PlaceholderPattern.Default);
+            string text = _service.GetText(document);
             string[] words = text.Split(new[] { ' ', '\n', ',', '.', ':' }, System.StringSplitOptions.RemoveEmptyEntries)
                 .Where(word => word.Length > 3).Distinct().Take(12).ToArray();
 
@@ -169,6 +169,27 @@ namespace PlaceKit.Tests.Services
 
             Assert.AreEqual(1, result.Processed);
             Assert.AreEqual(1, result.Skipped);
+        }
+
+        // As Create makes them: empty, showing the name, in every story.
+        [TestMethod]
+        public void Create_TurnsMarkersIntoEmptyPlaceholders()
+        {
+            Word.Document document = WordInstance.NewDocument("Dear {{Customer}}, order 4711.");
+            document.Sections[1].Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text = "Claim of {{Customer}}";
+
+            PlaceholderOperationResult result = _service.CreatePlaceholdersFromText(document, new[]
+            {
+                new DetectedPlaceholder("Client", "{{Customer}}", "", 2, isMarker: true),
+                new DetectedPlaceholder("Order", "4711", "", 1),
+            }, _progress, CancellationToken.None);
+
+            Assert.AreEqual(2, result.Processed);
+            List<Word.ContentControl> clients = WordInstance.PlaceKitControls(document).Where(control => control.Title == "Client").ToList();
+            Assert.AreEqual(2, clients.Count, "body and footer");
+            Assert.IsTrue(clients.All(control => control.ShowingPlaceholderText && control.Range.Text == "Client"));
+            Assert.AreEqual("4711", Control(document, "Order").Range.Text);
+            Assert.IsFalse(document.Content.Text.Contains("{{"));
         }
 
         [TestMethod]

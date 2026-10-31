@@ -85,21 +85,21 @@ namespace PlaceKit.Services
                 placeholder => ConvertToText(placeholder.Control, emptyPlaceholders == EmptyPlaceholderAction.KeepMarkers ? pattern.Format(placeholder.Name) : null));
         }
 
-        public string GetText(Word.Document document, PlaceholderPattern pattern)
+        public string GetText(Word.Document document)
         {
             // A header linked to the previous section's is the same text again; it would double the counts.
             HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
             return string.Join("\n\n", WordStories.GetTextStories(document)
-                .Select(story => ReadText(story, pattern))
+                .Select(ReadText)
                 .Where(text => !string.IsNullOrWhiteSpace(text) && seen.Add(text)));
         }
 
-        public string GetSelectedText(Word.Document document, PlaceholderPattern pattern)
+        public string GetSelectedText(Word.Document document)
         {
             try
             {
                 Word.Range selection = document.ActiveWindow.Selection.Range;
-                return selection.Start < selection.End ? ReadText(selection, pattern) : null;
+                return selection.Start < selection.End ? ReadText(selection) : null;
             }
             catch (COMException)
             {
@@ -177,9 +177,9 @@ namespace PlaceKit.Services
             }
         }
 
-        // A content control reads as a marker with its name. Its text can't become a placeholder, so Detect must not
-        // suggest it, and the AI service sees which parts are placeholders already.
-        static string ReadText(Word.Range range, PlaceholderPattern pattern)
+        // A content control reads as <placeholder name="..."/>. Its text can't become a placeholder, so Detect must not
+        // suggest it, and the AI service sees which parts are placeholders already, apart from markers still to convert.
+        static string ReadText(Word.Range range)
         {
             StringBuilder text = new StringBuilder();
             int position = range.Start;
@@ -193,7 +193,7 @@ namespace PlaceKit.Services
                 }
 
                 text.Append(TextBetween(range, position, start));
-                text.Append(pattern.Format(NameOf(control)));
+                text.Append(DetectRequest.ExistingPlaceholder(NameOf(control)));
                 position = Math.Min(control.Range.End + 1, range.End);
             }
 
@@ -272,7 +272,7 @@ namespace PlaceKit.Services
                     continue;
                 }
 
-                if (TryCreateControl(found, placeholder.Name, out _, out string failure, keepText: true))
+                if (TryCreateControl(found, placeholder.Name, out _, out string failure, keepText: !placeholder.IsMarker))
                 {
                     created++;
                 }

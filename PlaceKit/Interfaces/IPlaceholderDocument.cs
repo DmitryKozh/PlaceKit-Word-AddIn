@@ -14,11 +14,11 @@ namespace PlaceKit.Interfaces
 
         bool SelectPlaceholder(string name, int occurrence);
 
-        // Content controls read as markers with their names.
-        string ReadText(PlaceholderPattern pattern);
+        // Content controls read as <placeholder name="..."/>.
+        string ReadText();
 
         // null when nothing is selected.
-        string ReadSelectedText(PlaceholderPattern pattern);
+        string ReadSelectedText();
 
         PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders);
 

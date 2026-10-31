@@ -22,11 +22,11 @@ namespace PlaceKit.Interfaces
 
         bool SelectPlaceholder(Word.Document document, string name, int occurrence);
 
-        // Content controls read as markers with their names.
-        string GetText(Word.Document document, PlaceholderPattern pattern);
+        // Content controls read as <placeholder name="..."/>.
+        string GetText(Word.Document document);
 
         // null when nothing is selected.
-        string GetSelectedText(Word.Document document, PlaceholderPattern pattern);
+        string GetSelectedText(Word.Document document);
 
         // Processed: texts that became at least one placeholder. Skipped: texts not found.
         PlaceholderOperationResult CreatePlaceholdersFromText(Word.Document document, IReadOnlyList<DetectedPlaceholder> placeholders, IProgress<ProgressInfo> progress, CancellationToken token);

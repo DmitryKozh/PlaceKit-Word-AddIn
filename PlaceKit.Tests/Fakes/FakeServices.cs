@@ -205,13 +205,16 @@ namespace PlaceKit.Tests.Fakes
 
         public IReadOnlyList<string> LastExistingNames { get; private set; }
 
-        public IReadOnlyList<DetectedPlaceholder> Detect(string text, string documentText, string note, IReadOnlyList<string> existingNames)
+        public PlaceholderPattern LastMarkers { get; private set; }
+
+        public IReadOnlyList<DetectedPlaceholder> Detect(string text, string documentText, string note, IReadOnlyList<string> existingNames, PlaceholderPattern markers)
         {
             Calls++;
             LastText = text;
             LastDocumentText = documentText;
             LastNote = note;
             LastExistingNames = existingNames;
+            LastMarkers = markers;
             if (Error != null)
             {
                 throw Error;

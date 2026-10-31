@@ -98,6 +98,50 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Find_ListsTheMarkersFirstAndDropsSuggestionsAroundThem()
+        {
+            _detector.Found.Add(new DetectedPlaceholder("Greeting", "Dear {{Customer}}", "Repeats a marker", 1));
+            var dialog = new DetectViewModel(_document, "Dear {{Customer}}, your order 4711 of {{ Date }}.", null, new string[0], _detector, _ai, _settings, _dialogs);
+
+            dialog.FindCommand.Execute(null);
+
+            CollectionAssert.AreEqual(new[] { "Customer", "Date", "Client name", "Order number", "Order date" }, dialog.Items.Select(item => item.Name).ToList());
+            Assert.IsTrue(dialog.Items[0].IsMarker && dialog.Items[1].IsMarker && !dialog.Items[2].IsMarker);
+            Assert.AreEqual("{{ Date }}", dialog.Items[1].Text);
+            Assert.AreEqual("{{", _detector.LastMarkers.Opening, "the AI service is told which markers to leave alone");
+            StringAssert.StartsWith(dialog.ReviewIntro, "The document has 2 markers, and Claude suggests 3 more placeholders.");
+
+            dialog.CreateCommand.Execute(null);
+            Assert.IsTrue(dialog.Chosen[0].IsMarker);
+            Assert.IsFalse(dialog.Chosen[2].IsMarker);
+        }
+
+        [TestMethod]
+        public void Create_LetsTextJoinAMarkerOfTheSameName()
+        {
+            var dialog = new DetectViewModel(_document, "Dear {{Customer}}, your order 4711 of {{Order number}}.", null, new string[0], _detector, _ai, _settings, _dialogs);
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsNull(dialog.NameError, "4711 is suggested as Order number too");
+            Assert.IsTrue(dialog.CreateCommand.CanExecute(null));
+
+            dialog.Items.Single(item => item.Text == "Anna Berg").Name = "Order date";
+            StringAssert.Contains(dialog.NameError, "Two placeholders are named \"Order date\"");
+        }
+
+        [TestMethod]
+        public void Find_ShowsTheMarkersWhenNothingElseIsFound()
+        {
+            _detector.Found.Clear();
+            var dialog = new DetectViewModel(_document, "Dear {{Customer}}.", null, new string[0], _detector, _ai, _settings, _dialogs);
+
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsTrue(dialog.IsReviewStep);
+            StringAssert.StartsWith(dialog.ReviewIntro, "The document has 1 marker, and Claude found nothing else that changes.");
+        }
+
+        [TestMethod]
         public void Find_StaysOnTheScanWhenItFails()
         {
             _detector.Error = new AiServiceException("Could not reach Claude. Check the internet connection.");
@@ -119,6 +163,17 @@ namespace PlaceKit.Tests.ViewModels
 
             Assert.IsTrue(dialog.IsScanStep);
             StringAssert.StartsWith(dialog.Error, "No parts that change were found.");
+        }
+
+        [TestMethod]
+        public void Find_SaysThatExistingPlaceholdersAreLeftOut()
+        {
+            _detector.Found.Clear();
+            DetectViewModel dialog = Create(null, "Client name", "Order number");
+
+            dialog.FindCommand.Execute(null);
+
+            StringAssert.StartsWith(dialog.Error, "No new parts that change were found. The 2 placeholders already in the document are left out;");
         }
 
         [TestMethod]

@@ -29,9 +29,9 @@ namespace PlaceKit.Services
 
         public bool SelectPlaceholder(string name, int occurrence) => _placeholders.SelectPlaceholder(_document, name, occurrence);
 
-        public string ReadText(PlaceholderPattern pattern) => _placeholders.GetText(_document, pattern);
+        public string ReadText() => _placeholders.GetText(_document);
 
-        public string ReadSelectedText(PlaceholderPattern pattern) => _placeholders.GetSelectedText(_document, pattern);
+        public string ReadSelectedText() => _placeholders.GetSelectedText(_document);
 
         public PlaceholderOperationResult CreatePlaceholders(IReadOnlyList<DetectedPlaceholder> placeholders) =>
             _progress.Run("Creating placeholders", (progress, token) => _placeholders.CreatePlaceholdersFromText(_document, placeholders, progress, token));

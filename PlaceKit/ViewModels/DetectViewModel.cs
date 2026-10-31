@@ -84,7 +84,24 @@ namespace PlaceKit.ViewModels
 
         public IReadOnlyList<DetectedItemViewModel> Items { get; private set; }
 
-        public string ReviewIntro => $"{AiProviders.Name(Provider)} suggests {TextFormat.Quantity(Items.Count, "placeholder")}. Clear the ones you don't want and rename any; every occurrence of a text becomes its placeholder, and its text stays as the value.";
+        public string ReviewIntro
+        {
+            get
+            {
+                int marked = Items.Count(item => item.IsMarker);
+                int suggested = Items.Count - marked;
+                string service = AiProviders.Name(Provider);
+                if (marked == 0)
+                {
+                    return $"{service} suggests {TextFormat.Quantity(suggested, "placeholder")}. Clear the ones you don't want and rename any; every occurrence of a text becomes its placeholder, and its text stays as the value.";
+                }
+
+                string found = suggested == 0
+                    ? $"The document has {TextFormat.Quantity(marked, "marker")}, and {service} found nothing else that changes."
+                    : $"The document has {TextFormat.Quantity(marked, "marker")}, and {service} suggests {TextFormat.Quantity(suggested, "more placeholder")}.";
+                return found + " Clear the ones you don't want and rename any. Every occurrence becomes its placeholder: a marker an empty one, and other text keeps its text as the value.";
+            }
+        }
 
         public int ChosenCount { get; private set; }
 
@@ -126,10 +143,14 @@ namespace PlaceKit.ViewModels
             }
 
             RememberNote();
-            IReadOnlyList<DetectedPlaceholder> found;
+            PlaceholderPattern markers = _settings.Load().CreatePattern();
+            List<DetectedPlaceholder> marked = markers.FindMarkers(text)
+                .Select(marker => new DetectedPlaceholder(marker.Name, marker.Text, "Marked in the document", WordText.CountWholeWords(_documentText, marker.Text), isMarker: true))
+                .ToList();
+            IReadOnlyList<DetectedPlaceholder> suggested;
             try
             {
-                found = _detector.Detect(text, _documentText, Note, _existingNames);
+                suggested = _detector.Detect(text, _documentText, Note, _existingNames, markers);
             }
             catch (AiServiceException ex)
             {
@@ -137,9 +158,13 @@ namespace PlaceKit.ViewModels
                 return;
             }
 
+            // A suggestion around a marker would only repeat it.
+            List<DetectedPlaceholder> found = marked.Concat(suggested.Where(placeholder => !marked.Any(marker => placeholder.Text.Contains(marker.Text)))).ToList();
             if (found.Count == 0)
             {
-                Error = "No parts that change were found. A note that says what to look for may help.";
+                Error = _existingNames.Count == 0
+                    ? "No parts that change were found. A note that says what to look for may help."
+                    : $"No new parts that change were found. The {TextFormat.Quantity(_existingNames.Count, "placeholder")} already in the document are left out; a note that says what to look for may help.";
                 return;
             }
 
@@ -212,9 +237,9 @@ namespace PlaceKit.ViewModels
             List<DetectedItemViewModel> chosen = Items.Where(item => item.IsChosen).ToList();
             ChosenCount = chosen.Count;
 
-            string duplicate = chosen.Select(item => item.Name?.Trim() ?? string.Empty)
-                .GroupBy(name => name, StringComparer.OrdinalIgnoreCase)
-                .Where(group => group.Key.Length > 0 && group.Count() > 1)
+            // A marker names its placeholder, so other text may join it under the same name.
+            string duplicate = chosen.GroupBy(item => item.Name?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Key.Length > 0 && group.Count() > 1 && !group.Any(item => item.IsMarker))
                 .Select(group => group.Key)
                 .FirstOrDefault();
 
