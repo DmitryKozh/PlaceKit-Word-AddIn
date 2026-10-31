@@ -13,6 +13,10 @@ namespace PlaceKit.ViewModels
             Product = product;
             OpenWebsiteCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.Website, "about")));
             ContactCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.ContactPage, "about")));
+            OpenLinkedInCommand = new RelayCommand(() => urlLauncher.Open(product.LinkedIn));
+            OpenLicenseCommand = new RelayCommand(() => urlLauncher.Open(product.LicenseFile));
+            OpenNoticesCommand = new RelayCommand(() => urlLauncher.Open(product.NoticesFile));
+            AskForLicenseCommand = new RelayCommand(() => urlLauncher.Open(product.Link(product.ContactPage, "license")));
             CloseCommand = new RelayCommand(() => Close(true));
         }
 
@@ -28,6 +32,14 @@ namespace PlaceKit.ViewModels
         public ICommand OpenWebsiteCommand { get; }
 
         public ICommand ContactCommand { get; }
+
+        public ICommand OpenLinkedInCommand { get; }
+
+        public ICommand OpenLicenseCommand { get; }
+
+        public ICommand OpenNoticesCommand { get; }
+
+        public ICommand AskForLicenseCommand { get; }
 
         public ICommand CloseCommand { get; }
     }

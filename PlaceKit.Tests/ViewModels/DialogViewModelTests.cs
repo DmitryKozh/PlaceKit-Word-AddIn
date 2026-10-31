@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
@@ -78,14 +79,19 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
-        public void About_ShowsTheProductAndOpensTheWebsite()
+        public void About_ShowsTheProductAndOpensItsLinks()
         {
-            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"));
+            var product = new ProductInfo("PlaceKit", "1.2.3", "Description", "Developer", "Copyright", new Uri("https://boringjob.work"),
+                new Uri("https://boringjob.work/contact/"), new Uri("https://www.linkedin.com/in/developer/"), @"C:\PlaceKit");
             var launcher = new FakeUrlLauncher();
             var about = new AboutViewModel(product, launcher);
 
             about.OpenWebsiteCommand.Execute(null);
             about.ContactCommand.Execute(null);
+            about.AskForLicenseCommand.Execute(null);
+            about.OpenLinkedInCommand.Execute(null);
+            about.OpenLicenseCommand.Execute(null);
+            about.OpenNoticesCommand.Execute(null);
 
             Assert.AreEqual("About PlaceKit", about.Title);
             Assert.AreEqual("Version 1.2.3", about.VersionText);
@@ -96,6 +102,10 @@ namespace PlaceKit.Tests.ViewModels
                 {
                     "https://boringjob.work/?utm_source=placekit&utm_medium=add-in&utm_content=about",
                     "https://boringjob.work/contact/?utm_source=placekit&utm_medium=add-in&utm_content=about",
+                    "https://boringjob.work/contact/?utm_source=placekit&utm_medium=add-in&utm_content=license",
+                    "https://www.linkedin.com/in/developer/",
+                    "file:///C:/PlaceKit/License.txt",
+                    "file:///C:/PlaceKit/ThirdPartyNotices.txt",
                 },
                 launcher.Opened.Select(url => url.AbsoluteUri).ToList());
         }
@@ -109,6 +119,16 @@ namespace PlaceKit.Tests.ViewModels
             Assert.AreEqual("Dzmitry Kazhamiakin", product.Developer);
             Assert.AreEqual(new Uri("https://boringjob.work"), product.Website);
             Assert.AreEqual(new Uri("https://boringjob.work/contact/"), product.ContactPage);
+            Assert.AreEqual("www.linkedin.com", product.LinkedIn.Host);
+        }
+
+        [TestMethod]
+        public void ProductInfo_FindsTheLicenseFilesNextToTheAddIn()
+        {
+            ProductInfo product = ProductInfo.FromAssembly(typeof(ProductInfo).Assembly);
+
+            StringAssert.StartsWith(File.ReadAllText(product.LicenseFile.LocalPath), "Required Notice: Copyright 2026 Dzmitry Kazhamiakin");
+            StringAssert.StartsWith(File.ReadAllText(product.NoticesFile.LocalPath), "PlaceKit third-party notices");
         }
     }
 }

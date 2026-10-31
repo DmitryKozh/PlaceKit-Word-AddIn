@@ -20,11 +20,21 @@
 
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
-            <Button HorizontalAlignment="Right"
-                    Command="{Binding CloseCommand}"
-                    Content="Close"
-                    IsDefault="True"
-                    Style="{StaticResource PrimaryButtonStyle}" />
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding CloseCommand}"
+                        Content="Close"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButtonStyle}" />
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Using it at work?" />
+                    <Button Margin="4,0,0,0"
+                            Command="{Binding AskForLicenseCommand}"
+                            Content="Ask about a license"
+                            Style="{StaticResource LinkButtonStyle}"
+                            ToolTip="{Binding Product.ContactPage}" />
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <StackPanel Margin="{StaticResource DialogPadding}">
@@ -96,16 +106,33 @@
                 </StackPanel>
             </Border>
 
-            <StackPanel Margin="0,24,0,0"
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal"
-                        TextElement.FontSize="12">
-                <TextBlock Style="{StaticResource CaptionTextStyle}" Text="{Binding Product.Copyright}" />
-                <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
-                <Button Command="{Binding OpenWebsiteCommand}"
-                        Content="{Binding WebsiteText}"
-                        Style="{StaticResource LinkButtonStyle}"
-                        ToolTip="{Binding Product.Website}" />
+            <StackPanel Margin="0,24,0,0" TextElement.FontSize="12">
+                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource CaptionTextStyle}" Text="Free for noncommercial use" />
+                    <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
+                    <Button Command="{Binding OpenLicenseCommand}"
+                            Content="License terms"
+                            Style="{StaticResource LinkButtonStyle}"
+                            ToolTip="PolyForm Noncommercial License 1.0.0" />
+                    <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
+                    <Button Command="{Binding OpenNoticesCommand}"
+                            Content="Third-party notices"
+                            Style="{StaticResource LinkButtonStyle}"
+                            ToolTip="The libraries PlaceKit uses and their licenses" />
+                </StackPanel>
+                <StackPanel Margin="0,4,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource CaptionTextStyle}" Text="{Binding Product.Copyright}" />
+                    <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
+                    <Button Command="{Binding OpenWebsiteCommand}"
+                            Content="{Binding WebsiteText}"
+                            Style="{StaticResource LinkButtonStyle}"
+                            ToolTip="{Binding Product.Website}" />
+                    <TextBlock Margin="6,0" Style="{StaticResource CaptionTextStyle}" Text="&#x00B7;" />
+                    <Button Command="{Binding OpenLinkedInCommand}"
+                            Content="LinkedIn"
+                            Style="{StaticResource LinkButtonStyle}"
+                            ToolTip="{Binding Product.LinkedIn}" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </DockPanel>
