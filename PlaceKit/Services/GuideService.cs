@@ -36,15 +36,21 @@ namespace PlaceKit.Services
                 (Kind.Title, "Try PlaceKit"),
                 (Kind.Text, "PlaceKit is for documents you write again and again with different details, like claims, offers, contracts and letters. " +
                     "Mark the parts that change once, then fill them all in from one place instead of searching through the document."),
-                (Kind.Text, "The warranty claim below is ready to try. Each marked name in it is a placeholder, and Customer and Claim number are used three times, the footer included."),
+                (Kind.Text, "The warranty claim on the next page is ready to try. Each marked name in it is a placeholder, and Customer and Claim number are used three times, the footer included."),
                 (Kind.Step, "Create. Click Create on the PlaceKit tab. Every marker becomes a field that keeps its name."),
                 (Kind.Step, "Fill. Click Fill, type the values and click Save. The editor lists each placeholder once and fills in every place where it is used. " +
-                    "Export saves the values to a file, so you can import them into the next claim."),
+                    "Search finds a name, and the eye button shows its place in the document."),
                 (Kind.Step, "Finalize. When the letter is ready, click Finalize. The fields turn back into plain text, ready to send. " +
-                    "For placeholders left empty, you choose: turn them back into markers or delete them."),
+                    "For placeholders left empty, you choose: turn them back into markers or delete them. Save and finalize in the editor does both in one go."),
+                (Kind.Subheading, "More to try"),
+                (Kind.Feature, "Detect. For a finished document without markers, click Detect. Claude or ChatGPT suggests the parts that change, like names, dates and amounts, " +
+                    "and you choose which of them become placeholders."),
+                (Kind.Feature, "From text. In the editor, click From text and paste an email or notes. Claude or ChatGPT finds the values, and you check them before saving."),
+                (Kind.Feature, "Export and Import. In the editor, Export saves the values to a file, and Import loads them into the next claim."),
+                (Kind.Feature, "Settings. Choose other markers, where the editor opens and what Finalize does with empty placeholders. " +
+                    "Detect and From text need your own API key, which you add here. The Updates page checks for new versions."),
                 (Kind.Text, "Each step is a single undo, so Ctrl+Z takes you back. When you are done, close this document without saving."),
-                (Kind.Divider, ""),
-                (Kind.Line, P("Customer")),
+                (Kind.ClaimStart, P("Customer")),
                 (Kind.Text, P("Customer address")),
                 (Kind.Text, P("Date")),
                 (Kind.Line, P("Supplier")),
@@ -74,18 +80,19 @@ namespace PlaceKit.Services
                 switch (kind)
                 {
                     case Kind.Step:
-                        // The step's name, up to the first full stop.
+                    case Kind.Feature:
+                        // The name, up to the first full stop.
                         document.Range(paragraph.Range.Start, paragraph.Range.Start + text.IndexOf('.') + 1).Font.Bold = 1;
                         break;
                     case Kind.Line:
                         paragraph.SpaceAfter = 0;
                         break;
-                    case Kind.Divider:
-                        paragraph.Borders[Word.WdBorderType.wdBorderBottom].LineStyle = Word.WdLineStyle.wdLineStyleSingle;
-                        paragraph.SpaceAfter = 24;
+                    case Kind.ClaimStart:
+                        paragraph.SpaceAfter = 0;
+                        paragraph.PageBreakBefore = -1;
 
                         // No spelling marks under PlaceKit and Ctrl+Z in the steps above.
-                        document.Range(0, paragraph.Range.End).NoProofing = -1;
+                        document.Range(0, paragraph.Range.Start).NoProofing = -1;
                         break;
                     case Kind.Row:
                         rows = rows == null ? paragraph.Range : document.Range(rows.Start, paragraph.Range.End);
@@ -114,6 +121,10 @@ namespace PlaceKit.Services
                     return Word.WdBuiltinStyle.wdStyleTitle;
                 case Kind.Step:
                     return Word.WdBuiltinStyle.wdStyleListNumber;
+                case Kind.Feature:
+                    return Word.WdBuiltinStyle.wdStyleListBullet;
+                case Kind.Subheading:
+                    return Word.WdBuiltinStyle.wdStyleHeading2;
                 case Kind.Heading:
                     return Word.WdBuiltinStyle.wdStyleHeading1;
                 default:
@@ -126,10 +137,14 @@ namespace PlaceKit.Services
             Title,
             Text,
             Step,
+            Subheading,
+            Feature,
 
             // An address line, without space below.
             Line,
-            Divider,
+
+            // The claim's first line, on a page of its own.
+            ClaimStart,
             Heading,
 
             // Tab-separated columns; consecutive rows become a table.

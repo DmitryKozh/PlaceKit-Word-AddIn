@@ -35,6 +35,36 @@ namespace PlaceKit.Tests.Services
             StringAssert.StartsWith(document.Content.Text, "Try PlaceKit\r");
         }
 
+        [DataTestMethod]
+        [DataRow("Create.")]
+        [DataRow("Fill.")]
+        [DataRow("Finalize.")]
+        [DataRow("Save and finalize")]
+        [DataRow("Detect.")]
+        [DataRow("From text.")]
+        [DataRow("Export and Import.")]
+        [DataRow("Settings.")]
+        [DataRow("Updates page")]
+        public void Guide_NamesEveryFunction(string function)
+        {
+            StringAssert.Contains(_guide.CreateGuide(PlaceholderPattern.Default).Content.Text, function);
+        }
+
+        [TestMethod]
+        public void Guide_KeepsTheClaimWholeOnItsOwnPage()
+        {
+            Word.Document document = _guide.CreateGuide(PlaceholderPattern.Default);
+
+            int PageOf(string start) => (int)document.Paragraphs.Cast<Word.Paragraph>()
+                .First(paragraph => paragraph.Range.Text.StartsWith(start))
+                .Range.get_Information(Word.WdInformation.wdActiveEndPageNumber);
+
+            Assert.AreEqual(1, PageOf("Each step is a single undo"));
+            Assert.AreEqual(2, PageOf("{{Customer}}"));
+            Assert.AreEqual(2, PageOf("Kind regards"));
+            Assert.AreEqual(2, document.ComputeStatistics(Word.WdStatistic.wdStatisticPages));
+        }
+
         // The guide's own text must not look like a placeholder, whatever the markers.
         [DataTestMethod]
         [DataRow("{{", "}}")]
