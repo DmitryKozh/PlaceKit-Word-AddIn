@@ -39,7 +39,15 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- No Office on the GitHub runner: there, the interop assembly that comes with Visual Studio (see PlaceKit.csproj). -->
+  <ItemGroup Condition=" '$(GITHUB_ACTIONS)' == 'true' ">
+    <Reference Include="Microsoft.Office.Interop.Word, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c">
+      <Private>False</Private>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(GITHUB_ACTIONS)' != 'true' ">
     <COMReference Include="Microsoft.Office.Interop.Word">
       <Guid>{00020905-0000-0000-C000-000000000046}</Guid>
       <VersionMajor>8</VersionMajor>

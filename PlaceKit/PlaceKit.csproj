@@ -234,6 +234,14 @@
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+  <!--
+    The GitHub runner has Visual Studio's Office tools but no Office, so the Word type library that the
+    COM references below need is not registered there. The build takes the interop assemblies that come
+    with Visual Studio instead.
+  -->
+  <PropertyGroup Condition=" '$(GITHUB_ACTIONS)' == 'true' ">
+    <DefineConstants>$(DefineConstants);UseOfficeInterop</DefineConstants>
+  </PropertyGroup>
   <Choose>
     <When Condition="$([System.String]::Copy(&quot;;$(DefineConstants);&quot;).ToLower().Contains(';useofficeinterop;')) or $([System.String]::Copy(&quot;,$(DefineConstants),&quot;).ToLower().Contains(',useofficeinterop,'))">
       <ItemGroup>
