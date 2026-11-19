@@ -16,13 +16,51 @@ namespace PlaceKit.Tests.ViewModels
         readonly FakeUrlLauncher _launcher = new FakeUrlLauncher();
         readonly FakeDialogs _dialogs = new FakeDialogs();
         readonly FakeUpdateService _updates = new FakeUpdateService();
+        readonly FakeWordHost _word = new FakeWordHost();
         RibbonViewModel _ribbon;
 
         [TestInitialize]
         public void CreateRibbon()
         {
-            _ribbon = new RibbonViewModel(null, null, _settings, _dialogs, null, null, _guide, new FakeAiService(), new FakeDetector(), TestProduct.Create(), _launcher,
-                _updates, () => new SettingsViewModel(_settings, new MemoryApiKeyStore(), new FakeAiService(), _launcher, _updates, TestProduct.Create()));
+            _ribbon = new RibbonViewModel(_word, null, _settings, _dialogs, null, null, _guide, new FakeAiService(), new FakeDetector(), TestProduct.Create(), _launcher,
+                _updates, () => new SettingsViewModel(_settings, new MemoryApiKeyStore(), new FakeAiService(), _launcher, _updates, TestProduct.Create()),
+                () => new WelcomeViewModel(new FakeAiService(), _launcher, TestProduct.Create()));
+        }
+
+        [TestMethod]
+        public void Welcome_ShowsOnceAndOpensTheSample()
+        {
+            _dialogs.OnShowDialog = dialog => ((WelcomeViewModel)dialog).OpenSampleCommand.Execute(null);
+
+            Assert.IsTrue(_ribbon.ShowWelcomeOnce());
+            Assert.IsTrue(_ribbon.ShowWelcomeOnce(), "settled");
+
+            Assert.IsInstanceOfType(_dialogs.Shown.Single(), typeof(WelcomeViewModel));
+            Assert.IsTrue(_settings.Current.WelcomeShown);
+            Assert.AreEqual(1, _guide.Patterns.Count, "the sample opened");
+        }
+
+        [TestMethod]
+        public void Welcome_ClosedOpensNothing()
+        {
+            _dialogs.OnShowDialog = dialog => ((WelcomeViewModel)dialog).CloseCommand.Execute(null);
+
+            _ribbon.ShowWelcomeOnce();
+
+            Assert.AreEqual(0, _guide.Patterns.Count);
+            Assert.IsTrue(_settings.Current.WelcomeShown);
+        }
+
+        // A program that runs Word in the background would wait for the window forever.
+        [TestMethod]
+        public void Welcome_WaitsForAPersonUsingWord()
+        {
+            _word.IsUserSession = false;
+
+            Assert.IsFalse(_ribbon.ShowWelcomeOnce(), "asked again at the next window");
+
+            Assert.AreEqual(0, _dialogs.Shown.Count);
+            Assert.IsFalse(_settings.Current.WelcomeShown, "shown the next time a person starts Word");
         }
 
         [TestMethod]

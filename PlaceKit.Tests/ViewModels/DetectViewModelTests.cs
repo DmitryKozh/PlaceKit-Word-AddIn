@@ -229,6 +229,62 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Guide_WithAKey_AsksTheService()
+        {
+            _document.IsGuide = true;
+            DetectViewModel dialog = Create();
+
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsFalse(dialog.IsSample);
+            StringAssert.Contains(dialog.SendNote, "are sent to Anthropic");
+            Assert.AreEqual(1, _detector.Calls);
+        }
+
+        // The sample answer is about the guide's order confirmation; this text shares two of its parts.
+        [TestMethod]
+        public void Guide_WithoutAKey_UsesTheSample()
+        {
+            _document.IsGuide = true;
+            _ai.HasApiKey = false;
+            DetectViewModel dialog = Create();
+
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsTrue(dialog.IsSample);
+            StringAssert.StartsWith(dialog.SendNote, "This is the guide, so a sample answer stands in: nothing is sent");
+            Assert.AreEqual(0, _detector.Calls);
+            CollectionAssert.AreEqual(new[] { "Contact", "Confirmation number" }, dialog.Items.Select(item => item.Name).ToList());
+        }
+
+        [TestMethod]
+        public void Guide_WithoutAKey_PointsToTheOrderConfirmation()
+        {
+            _document.IsGuide = true;
+            _ai.HasApiKey = false;
+            var dialog = new DetectViewModel(_document, "Dear Sir or Madam, thank you.", null, new string[0], _detector, _ai, _settings, _dialogs);
+
+            dialog.FindCommand.Execute(null);
+
+            StringAssert.StartsWith(dialog.Error, "Without an API key, Detect in the guide works on the order confirmation");
+        }
+
+        [TestMethod]
+        public void Guide_KeyAddedInSettings_AsksTheService()
+        {
+            _document.IsGuide = true;
+            _ai.HasApiKey = false;
+            _ai.OnOpenSettings = () => _ai.HasApiKey = true;
+            DetectViewModel dialog = Create();
+
+            dialog.ChangeServiceCommand.Execute(null);
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsFalse(dialog.IsSample);
+            Assert.AreEqual(1, _detector.Calls);
+        }
+
+        [TestMethod]
         public void Create_NeedsAChoice()
         {
             DetectViewModel dialog = Create();

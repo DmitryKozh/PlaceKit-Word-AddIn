@@ -16,8 +16,10 @@ namespace PlaceKit.Services
         readonly IProgressService _progress;
         readonly IDialogService _dialogs;
         readonly Func<SettingsViewModel> _createSettings;
+        readonly Func<string, AiSetupViewModel> _createSetup;
 
-        public AiService(IEnumerable<IAiClient> clients, ISettingsService settings, IApiKeyStore apiKeys, IProgressService progress, IDialogService dialogs, Func<SettingsViewModel> createSettings)
+        public AiService(IEnumerable<IAiClient> clients, ISettingsService settings, IApiKeyStore apiKeys, IProgressService progress, IDialogService dialogs,
+            Func<SettingsViewModel> createSettings, Func<string, AiSetupViewModel> createSetup)
         {
             _clients = clients.ToDictionary(client => client.Provider);
             _settings = settings;
@@ -25,6 +27,7 @@ namespace PlaceKit.Services
             _progress = progress;
             _dialogs = dialogs;
             _createSettings = createSettings;
+            _createSetup = createSetup;
         }
 
         public AiProvider Provider => _settings.Load().AiProvider;
@@ -50,19 +53,11 @@ namespace PlaceKit.Services
                 return true;
             });
 
-        public bool EnsureApiKey(string feature)
+        public bool EnsureApiKey(string feature) => HasApiKey || SetUp(feature);
+
+        public bool SetUp(string feature)
         {
-            if (HasApiKey)
-            {
-                return true;
-            }
-
-            if (!_dialogs.Confirm("Set up AI", $"{feature} uses Claude or ChatGPT with your own API key. Set it up in Settings now?"))
-            {
-                return false;
-            }
-
-            OpenSettings();
+            _dialogs.ShowDialog(_createSetup(feature));
             return HasApiKey;
         }
 

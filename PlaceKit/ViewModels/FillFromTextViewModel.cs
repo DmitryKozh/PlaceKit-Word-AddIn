@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
+using PlaceKit.Services;
 using PlaceKit.Tools;
 
 namespace PlaceKit.ViewModels
@@ -16,6 +17,7 @@ namespace PlaceKit.ViewModels
         readonly IValueFinder _finder;
         readonly IAiService _ai;
         readonly IDialogService _dialogs;
+        bool _isGuide;
 
         public FillFromTextViewModel(IReadOnlyList<string> names, IValueFinder finder, IAiService ai, IDialogService dialogs)
             : base("Fill from text")
@@ -39,7 +41,12 @@ namespace PlaceKit.ViewModels
 
         public bool HasText => !string.IsNullOrWhiteSpace(Text);
 
-        public string ServiceNote => $"The text and the placeholder names are sent to {AiProviders.Company(Provider)}. Nothing is written to the document until you save.";
+        // The guide without an API key: a sample answer stands in.
+        public bool IsSample { get; private set; }
+
+        public string ServiceNote => IsSample
+            ? "This is the guide, so a sample answer stands in: nothing is sent, and no API key is needed. Nothing is written to the document until you save."
+            : $"The text and the placeholder names are sent to {AiProviders.Company(Provider)}. Nothing is written to the document until you save.";
 
         public string Error { get; private set; }
 
@@ -53,6 +60,14 @@ namespace PlaceKit.ViewModels
 
         public ICommand ChangeServiceCommand { get; }
 
+        // In the guide, the sample email is filled in, and without a key a sample answer stands in.
+        public void UseGuide()
+        {
+            _isGuide = true;
+            Text = GuideSamples.Email;
+            IsSample = GuideSamples.Apply(_isGuide, _ai);
+        }
+
         void OnTextChanged() => Error = null;
 
         void Find()
@@ -65,7 +80,7 @@ namespace PlaceKit.ViewModels
 
             try
             {
-                Values = _finder.FindValues(Text, _names);
+                Values = (IsSample ? GuideSamples.ValueFinder : _finder).FindValues(Text, _names);
             }
             catch (AiServiceException ex)
             {
@@ -80,6 +95,7 @@ namespace PlaceKit.ViewModels
         {
             _ai.OpenSettings();
             Provider = _ai.Provider;
+            IsSample = GuideSamples.Apply(_isGuide, _ai);
             Error = null;
         }
     }

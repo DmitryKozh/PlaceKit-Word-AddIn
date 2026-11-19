@@ -38,6 +38,7 @@ namespace PlaceKit.Tests.Fakes
             to.AiProvider = from.AiProvider;
             to.DetectNote = from.DetectNote;
             to.CheckForUpdates = from.CheckForUpdates;
+            to.WelcomeShown = from.WelcomeShown;
             return to;
         }
     }
@@ -93,6 +94,17 @@ namespace PlaceKit.Tests.Fakes
         public List<string> ShownInFolder { get; } = new List<string>();
 
         public void ShowInFolder(string path) => ShownInFolder.Add(path);
+    }
+
+    sealed class FakeWordHost : IWordHost
+    {
+        public Word.Document ActiveDocument => null;
+
+        public IntPtr MainWindowHandle => IntPtr.Zero;
+
+        public bool IsUserSession { get; set; } = true;
+
+        public Word.Document NewDocument() => throw new NotSupportedException("No Word here.");
     }
 
     sealed class FakeEditors : IEditorService
@@ -186,6 +198,15 @@ namespace PlaceKit.Tests.Fakes
                 OnSetUpKey();
             }
 
+            return HasApiKey;
+        }
+
+        public int SetUps { get; private set; }
+
+        public bool SetUp(string feature)
+        {
+            SetUps++;
+            OnSetUpKey();
             return HasApiKey;
         }
 

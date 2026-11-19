@@ -391,6 +391,45 @@ namespace PlaceKit.Tests.ViewModels
             CollectionAssert.AreEqual(new[] { "No values for these placeholders were found in the text." }, _dialogs.Messages);
         }
 
+        // The guide fills in its sample email, and without a key a sample answer stands in.
+        [TestMethod]
+        public void FillFromText_InTheGuideWithoutAKey_UsesTheSample()
+        {
+            _document.IsGuide = true;
+            _ai.HasApiKey = false;
+            FillFromTextViewModel shown = null;
+            _dialogs.OnShowDialog = dialog =>
+            {
+                shown = (FillFromTextViewModel)dialog;
+                shown.FindCommand.Execute(null);
+            };
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            Assert.AreEqual(0, _ai.EnsuredFor.Count, "no key is asked for");
+            Assert.IsTrue(shown.IsSample);
+            StringAssert.StartsWith(shown.Text, "Hamburg, 19 November 2026");
+            StringAssert.StartsWith(shown.ServiceNote, "This is the guide, so a sample answer stands in: nothing is sent");
+            Assert.AreEqual(0, _finder.Calls, "the AI service isn't asked");
+            Assert.AreEqual("19 November 2026", _editor.Items[2].Value, "Date");
+        }
+
+        [TestMethod]
+        public void FillFromText_InTheGuideWithAKey_SendsTheSampleEmail()
+        {
+            _document.IsGuide = true;
+            _dialogs.OnShowDialog = dialog =>
+            {
+                var shown = (FillFromTextViewModel)dialog;
+                Assert.IsFalse(shown.IsSample);
+                shown.FindCommand.Execute(null);
+            };
+
+            _editor.FillFromTextCommand.Execute(null);
+
+            StringAssert.StartsWith(_finder.LastText, "Hamburg, 19 November 2026");
+        }
+
         [TestMethod]
         public void FillFromText_WithoutAKey_StopsWhenNoneIsSetUp()
         {

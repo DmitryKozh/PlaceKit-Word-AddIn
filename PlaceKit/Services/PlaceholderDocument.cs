@@ -21,6 +21,8 @@ namespace PlaceKit.Services
 
         public string Name => Path.GetFileNameWithoutExtension(_document.Name);
 
+        public bool IsGuide => GuideService.IsGuide(_document);
+
         public IReadOnlyList<PlaceholderInfo> LoadPlaceholders() =>
             _progress.Run("Loading placeholders", (progress, token) => _placeholders.GetPlaceholders(_document, progress, token));
 

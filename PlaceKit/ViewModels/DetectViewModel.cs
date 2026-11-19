@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Input;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
+using PlaceKit.Services;
 using PlaceKit.Tools;
 
 namespace PlaceKit.ViewModels
@@ -22,6 +23,7 @@ namespace PlaceKit.ViewModels
         readonly IAiService _ai;
         readonly ISettingsService _settings;
         readonly IDialogService _dialogs;
+        readonly bool _isGuide;
 
         public DetectViewModel(IPlaceholderDocument document, string documentText, string selectedText, IReadOnlyList<string> existingNames,
             IPlaceholderDetector detector, IAiService ai, ISettingsService settings, IDialogService dialogs)
@@ -35,7 +37,9 @@ namespace PlaceKit.ViewModels
             _ai = ai;
             _settings = settings;
             _dialogs = dialogs;
+            _isGuide = document.IsGuide;
             Provider = ai.Provider;
+            IsSample = GuideSamples.Apply(_isGuide, ai);
             Note = settings.Load().DetectNote;
             SetItems(new List<DetectedItemViewModel>());
 
@@ -76,7 +80,12 @@ namespace PlaceKit.ViewModels
 
         public string Note { get; set; } = string.Empty;
 
-        public string SendNote => $"{(ScanSelection ? "The selected text" : "The text of the document")} and your note are sent to {AiProviders.Company(Provider)}. The document doesn't change until you create the placeholders.";
+        // The guide without an API key: a sample answer stands in.
+        public bool IsSample { get; private set; }
+
+        public string SendNote => IsSample
+            ? "This is the guide, so a sample answer stands in: nothing is sent, and no API key is needed. The document doesn't change until you create the placeholders."
+            : $"{(ScanSelection ? "The selected text" : "The text of the document")} and your note are sent to {AiProviders.Company(Provider)}. The document doesn't change until you create the placeholders.";
 
         public bool IsReviewStep { get; private set; }
 
@@ -150,7 +159,7 @@ namespace PlaceKit.ViewModels
             IReadOnlyList<DetectedPlaceholder> suggested;
             try
             {
-                suggested = _detector.Detect(text, _documentText, Note, _existingNames, markers);
+                suggested = (IsSample ? GuideSamples.Detector : _detector).Detect(text, _documentText, Note, _existingNames, markers);
             }
             catch (AiServiceException ex)
             {
@@ -162,7 +171,10 @@ namespace PlaceKit.ViewModels
             List<DetectedPlaceholder> found = marked.Concat(suggested.Where(placeholder => !marked.Any(marker => placeholder.Text.Contains(marker.Text)))).ToList();
             if (found.Count == 0)
             {
-                Error = _existingNames.Count == 0
+                // The sample answer covers the order confirmation only; a note can't change it.
+                Error = IsSample
+                    ? "Without an API key, Detect in the guide works on the order confirmation on the last page. Choose the whole document, or select the confirmation, and try again."
+                    : _existingNames.Count == 0
                     ? "No parts that change were found. A note that says what to look for may help."
                     : $"No new parts that change were found. The {TextFormat.Quantity(_existingNames.Count, "placeholder")} already in the document are left out; a note that says what to look for may help.";
                 return;
@@ -217,6 +229,7 @@ namespace PlaceKit.ViewModels
         {
             _ai.OpenSettings();
             Provider = _ai.Provider;
+            IsSample = GuideSamples.Apply(_isGuide, _ai);
             Error = null;
         }
 

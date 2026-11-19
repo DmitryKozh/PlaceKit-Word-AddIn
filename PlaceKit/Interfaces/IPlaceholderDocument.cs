@@ -8,6 +8,9 @@ namespace PlaceKit.Interfaces
     {
         string Name { get; }
 
+        // The guide that PlaceKit made, where Detect and From text work without an API key
+        bool IsGuide { get; }
+
         IReadOnlyList<PlaceholderInfo> LoadPlaceholders();
 
         PlaceholderOperationResult SavePlaceholders(IReadOnlyDictionary<string, string> values);

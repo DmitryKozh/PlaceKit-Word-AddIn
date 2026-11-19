@@ -55,6 +55,7 @@ namespace PlaceKit.Tests.Services
                 AiProvider = AiProvider.OpenAI,
                 DetectNote = "Only names,\nin English",
                 CheckForUpdates = false,
+                WelcomeShown = true,
             });
 
             PlaceKitSettings loaded = _store.Load();
@@ -69,6 +70,21 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(AiProvider.OpenAI, loaded.AiProvider);
             Assert.AreEqual("Only names,\nin English", loaded.DetectNote);
             Assert.IsFalse(loaded.CheckForUpdates);
+            Assert.IsTrue(loaded.WelcomeShown);
+        }
+
+        // Settings from a version without the welcome: that user knows PlaceKit already.
+        [TestMethod]
+        public void Load_SettingsOfAnOlderVersion_CountTheWelcomeAsShown()
+        {
+            Assert.IsFalse(_store.Load().WelcomeShown, "nothing stored: a new user");
+
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(_keyPath))
+            {
+                key.SetValue("AiProvider", "OpenAI");
+            }
+
+            Assert.IsTrue(_store.Load().WelcomeShown);
         }
 
         [TestMethod]

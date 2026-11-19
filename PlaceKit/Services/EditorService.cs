@@ -53,7 +53,7 @@ namespace PlaceKit.Services
             if (editor.IsEmpty)
             {
                 string example = settings.CreatePattern().Format("text");
-                _dialogs.ShowMessage("PlaceKit", $"This document has no placeholders yet. Click Create to turn {example} markers into placeholders.", MessageKind.Information);
+                _dialogs.ShowMessage("PlaceKit", $"This document has no placeholders yet. Click Create to turn {example} markers into placeholders, or Detect to find the parts that change with AI.", MessageKind.Information);
                 return;
             }
 

@@ -23,6 +23,9 @@ namespace PlaceKit.Models
 
         public bool CheckForUpdates { get; set; } = true;
 
+        // The welcome window shows once; Settings has no switch for it.
+        public bool WelcomeShown { get; set; }
+
         public PlaceholderPattern CreatePattern() => new PlaceholderPattern(OpeningMarker, ClosingMarker);
     }
 }

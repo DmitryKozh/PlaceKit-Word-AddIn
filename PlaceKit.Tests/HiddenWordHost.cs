@@ -11,6 +11,8 @@ namespace PlaceKit.Tests
 
         public IntPtr MainWindowHandle => IntPtr.Zero;
 
+        public bool IsUserSession => false;
+
         public Word.Document NewDocument() => WordInstance.NewDocument();
     }
 }

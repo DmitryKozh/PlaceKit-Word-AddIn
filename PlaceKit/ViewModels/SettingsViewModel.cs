@@ -291,29 +291,9 @@ namespace PlaceKit.ViewModels
 
         void TestConnection()
         {
-            string apiKey = HasNewApiKey ? NewApiKey.Trim() : _apiKeys.Load(AiProvider);
-            try
-            {
-                _ai.TestKey(AiProvider, apiKey);
-                ConnectionMessage = $"Connected to {AiProviders.Name(AiProvider)}.";
-                IsConnected = true;
-            }
-            catch (AiServiceException ex)
-            {
-                ConnectionMessage = ex.Message;
-                IsConnected = false;
-            }
-            catch (OperationCanceledException)
-            {
-                ConnectionMessage = null;
-            }
-            catch (Exception ex)
-            {
-                // Exceptions must not reach Office from a dialog's command.
-                Trace.TraceError("PlaceKit: {0}", ex);
-                ConnectionMessage = $"The test failed: {ex.Message}";
-                IsConnected = false;
-            }
+            ApiKeyTest test = ApiKeyTest.Run(_ai, AiProvider, HasNewApiKey ? NewApiKey.Trim() : _apiKeys.Load(AiProvider));
+            IsConnected = test.IsConnected;
+            ConnectionMessage = test.IsConnected ? $"Connected to {AiProviders.Name(AiProvider)}." : test.Error;
         }
 
         Uri ReleaseNotes() => _product.Link(AvailableUpdate.Page, "update");

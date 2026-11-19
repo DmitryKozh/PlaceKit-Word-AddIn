@@ -47,6 +47,22 @@ namespace PlaceKit.Services
             }
         }
 
+        public bool IsUserSession
+        {
+            get
+            {
+                try
+                {
+                    Word.Application application = _application();
+                    return application.Visible && application.UserControl;
+                }
+                catch (COMException)
+                {
+                    return false;
+                }
+            }
+        }
+
         public Word.Document NewDocument() => _application().Documents.Add();
     }
 }

@@ -379,6 +379,7 @@
     <Compile Include="Services\DetectRequest.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\EditorService.cs" />
+    <Compile Include="Services\GuideSamples.cs" />
     <Compile Include="Services\GuideService.cs" />
     <Compile Include="Services\OpenAIClient.cs" />
     <Compile Include="Services\PlaceholderDetector.cs" />
@@ -410,6 +411,8 @@
     <Compile Include="Tools\WordStories.cs" />
     <Compile Include="Tools\WordText.cs" />
     <Compile Include="ViewModels\AboutViewModel.cs" />
+    <Compile Include="ViewModels\AiSetupViewModel.cs" />
+    <Compile Include="ViewModels\ApiKeyTest.cs" />
     <Compile Include="ViewModels\CreateSummaryViewModel.cs" />
     <Compile Include="ViewModels\DetectedItemViewModel.cs" />
     <Compile Include="ViewModels\DetectViewModel.cs" />
@@ -425,8 +428,12 @@
     <Compile Include="ViewModels\SettingsPage.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="ViewModels\WelcomeViewModel.cs" />
     <Compile Include="Views\AboutWindow.xaml.cs">
       <DependentUpon>AboutWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AiSetupWindow.xaml.cs">
+      <DependentUpon>AiSetupWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\CreateSummaryWindow.xaml.cs">
       <DependentUpon>CreateSummaryWindow.xaml</DependentUpon>
@@ -460,7 +467,14 @@
     <Compile Include="Views\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\WelcomeWindow.xaml.cs">
+      <DependentUpon>WelcomeWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\AboutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AiSetupWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -497,6 +511,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\SettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\WelcomeWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

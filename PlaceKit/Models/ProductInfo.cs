@@ -41,6 +41,9 @@ namespace PlaceKit.Models
 
         public Uri LinkedIn { get; }
 
+        // The page with the video walkthrough
+        public Uri Walkthrough => new Uri(Website, "placekit/guide/");
+
         // The JSON file on the website that names the latest version.
         public Uri UpdateFeed { get; }
 

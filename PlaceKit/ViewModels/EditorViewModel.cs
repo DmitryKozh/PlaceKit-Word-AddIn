@@ -271,14 +271,21 @@ namespace PlaceKit.ViewModels
             _dialogs.ShowMessage(Caption, message, MessageKind.Information);
         }
 
+        // The guide works without a key; the dialog uses its sample then.
         void FillFromText()
         {
-            if (!_ai.EnsureApiKey("From text"))
+            bool isGuide = _document.IsGuide;
+            if (!isGuide && !_ai.EnsureApiKey("From text"))
             {
                 return;
             }
 
             FillFromTextViewModel dialog = _createFillFromText(Items.Select(item => item.Name).ToList());
+            if (isGuide)
+            {
+                dialog.UseGuide();
+            }
+
             if (_dialogs.ShowDialog(dialog) != true)
             {
                 return;

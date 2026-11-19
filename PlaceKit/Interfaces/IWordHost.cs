@@ -9,6 +9,9 @@ namespace PlaceKit.Interfaces
 
         IntPtr MainWindowHandle { get; }
 
+        // false when a program runs Word, perhaps without a window, and nobody would answer a dialog
+        bool IsUserSession { get; }
+
         Word.Document NewDocument();
     }
 }

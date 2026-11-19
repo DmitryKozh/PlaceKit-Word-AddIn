@@ -21,7 +21,7 @@ PlaceKit is a Microsoft Word add-in for Windows. Turn a warranty claim, proposal
 
 ## Features
 
-Create, Fill, Finalize, Import, and Export run locally. AI is optional. When you use Detect or From text, PlaceKit sends the relevant text directly to Anthropic or OpenAI using your own API key.
+Create, Fill, Finalize, Import, and Export run locally. AI is optional. When you use Detect or From text, PlaceKit sends the relevant text directly to Anthropic or OpenAI using your own API key. The first time, a short setup walks you through getting the key. In the Guide sample, both work without a key: a sample answer stands in, and nothing is sent.
 
 - **Create** works in the body, tables, headers, footers, text boxes and notes. Each control gets the name as its title and `PlaceKit-{name}` as its tag.
 - **Detect** finds the placeholders in a finished document for you. Claude or ChatGPT reads the document (or just the selection) and suggests the parts that change, like names, dates and amounts. You can add a note on what to look for. You pick and rename the suggestions, and each one becomes a placeholder everywhere it appears. Suggestions are checked against the document, so made-up text never gets through. Markers already in the text, like `{{Customer}}`, are listed too and become empty placeholders, as with Create.

@@ -1,0 +1,132 @@
+<Window x:Class="PlaceKit.Views.WelcomeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:PlaceKit.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:WelcomeViewModel}"
+        Title="{Binding Title}"
+        Width="540"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=OpenSampleButton}"
+        Style="{DynamicResource DialogWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="TopicIconStyle" TargetType="Border">
+                <Setter Property="Width" Value="40" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="Margin" Value="0,0,16,0" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+                <Setter Property="CornerRadius" Value="20" />
+            </Style>
+
+            <Style x:Key="TopicGlyphStyle" BasedOn="{StaticResource IconTextStyle}" TargetType="TextBlock">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource FooterStyle}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding CloseCommand}"
+                        Content="Close"
+                        Style="{StaticResource SecondaryButtonStyle}" />
+                <TextBlock Margin="0,0,16,0"
+                           VerticalAlignment="Center"
+                           Style="{StaticResource CaptionTextStyle}"
+                           Text="The sample stays under Guide on the PlaceKit tab." />
+            </DockPanel>
+        </Border>
+
+        <StackPanel Margin="{StaticResource DialogPadding}">
+            <TextBlock Style="{StaticResource TitleTextStyle}" Text="PlaceKit is ready" />
+            <TextBlock Margin="0,4,0,0"
+                       Style="{StaticResource SecondaryTextStyle}"
+                       Text="For documents you write again and again: mark the parts that change once, then fill them all in from one panel. Everything is on the PlaceKit tab." />
+
+            <Grid Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource TopicIconStyle}">
+                    <TextBlock Style="{StaticResource TopicGlyphStyle}" Text="&#xE8A5;" />
+                </Border>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="Try it on a sample" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="A warranty claim and the three steps to follow: create the placeholders, fill them in, finalize. It takes about two minutes." />
+                    <Button x:Name="OpenSampleButton"
+                            Margin="0,12,0,0"
+                            HorizontalAlignment="Left"
+                            Command="{Binding OpenSampleCommand}"
+                            Content="_Open the sample"
+                            IsDefault="True"
+                            Style="{StaticResource PrimaryButtonStyle}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource TopicIconStyle}">
+                    <TextBlock Style="{StaticResource TopicGlyphStyle}" Text="&#xE82F;" />
+                </Border>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="Turn on AI, if you like" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Detect finds the parts that change in a finished document, and From text fills in the values from an email. Both use your own Claude or ChatGPT key; in the sample they work without one." />
+                    <Button Margin="0,12,0,0"
+                            HorizontalAlignment="Left"
+                            Command="{Binding SetUpAiCommand}"
+                            Content="_Set up AI"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Visibility="{Binding CanSetUpAi, Converter={StaticResource BooleanToVisibility}}" />
+                    <StackPanel Margin="0,12,0,0"
+                                Orientation="Horizontal"
+                                Visibility="{Binding IsAiConnected, Converter={StaticResource BooleanToVisibility}}">
+                        <TextBlock Margin="0,3,8,0"
+                                   VerticalAlignment="Top"
+                                   Foreground="{StaticResource SuccessBrush}"
+                                   Style="{StaticResource IconTextStyle}"
+                                   Text="&#xE73E;" />
+                        <TextBlock Text="{Binding AiStatus}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource TopicIconStyle}">
+                    <TextBlock Style="{StaticResource TopicGlyphStyle}" Text="&#xE714;" />
+                </Border>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Style="{StaticResource SectionTextStyle}" Text="Watch it first" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="A walkthrough of a minute and a half on boringjob.work." />
+                    <Button Margin="0,8,0,0"
+                            HorizontalAlignment="Left"
+                            Command="{Binding WatchVideoCommand}"
+                            Content="Watch the video"
+                            Style="{StaticResource LinkButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </DockPanel>
+</Window>

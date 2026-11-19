@@ -12,8 +12,11 @@ namespace PlaceKit.Interfaces
 
         void TestKey(AiProvider provider, string apiKey);
 
-        // No key yet: offers to open Settings. True once a key is set.
+        // No key yet: shows the AI setup. True once there is a key.
         bool EnsureApiKey(string feature);
+
+        // The AI setup, asked for by a feature such as "Detect", or null. True if there is a key afterwards.
+        bool SetUp(string feature);
 
         void OpenSettings();
     }

@@ -24,6 +24,8 @@ namespace PlaceKit.Services
             [typeof(DetectViewModel)] = () => new DetectWindow(),
             [typeof(SettingsViewModel)] = () => new SettingsWindow(),
             [typeof(AboutViewModel)] = () => new AboutWindow(),
+            [typeof(AiSetupViewModel)] = () => new AiSetupWindow(),
+            [typeof(WelcomeViewModel)] = () => new WelcomeWindow(),
         };
 
         readonly IWordHost _wordHost;

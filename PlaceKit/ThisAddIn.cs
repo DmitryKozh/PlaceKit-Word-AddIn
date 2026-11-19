@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Office.Tools.Ribbon;
 using PlaceKit.Interfaces;
 using PlaceKit.Tools;
@@ -10,6 +11,7 @@ namespace PlaceKit
     public partial class ThisAddIn
     {
         ServiceProvider _services;
+        bool _welcomeSettled;
 
         // Office asks for the ribbon before Startup, so the container is built here.
         // Application and CustomTaskPanes are not ready yet and are passed lazily.
@@ -25,7 +27,42 @@ namespace PlaceKit
         void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             Application.DocumentBeforeClose += HandleDocumentBeforeClose;
+            Application.WindowActivate += HandleWindowActivate;
             _ = _services?.GetRequiredService<IUpdateService>().CheckInBackgroundAsync();
+
+            // Word may show its first window before the add-in loads, and then no activation follows.
+            OfferWelcome();
+        }
+
+        void HandleWindowActivate(Word.Document document, Word.Window window) => OfferWelcome();
+
+        // Posted, so Word finishes showing its window first. Asked again at each window until settled, since
+        // Word may not be visible yet or may be run by a program for now.
+        void OfferWelcome()
+        {
+            if (_services == null || _welcomeSettled)
+            {
+                return;
+            }
+
+            RibbonViewModel ribbon = _services.GetRequiredService<RibbonViewModel>();
+            _services.GetRequiredService<SynchronizationContext>().Post(state =>
+            {
+                if (!_welcomeSettled && ribbon.ShowWelcomeOnce())
+                {
+                    SettleWelcome();
+                }
+            }, null);
+        }
+
+        // An activation while the welcome is open settles it too, so this can come twice.
+        void SettleWelcome()
+        {
+            if (!_welcomeSettled)
+            {
+                _welcomeSettled = true;
+                Application.WindowActivate -= HandleWindowActivate;
+            }
         }
 
         // After an error the document still closes: a question that keeps failing must not trap it.

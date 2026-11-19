@@ -318,7 +318,7 @@
                            Text="No placeholders in this document" />
                 <TextBlock Margin="0,4,0,0"
                            Style="{StaticResource SecondaryTextStyle}"
-                           Text="Click Create on the PlaceKit tab to turn marked text into placeholders."
+                           Text="Click Create on the PlaceKit tab to turn marked text into placeholders, or Detect to find the parts that change with AI."
                            TextAlignment="Center" />
             </StackPanel>
 

@@ -23,15 +23,21 @@ namespace PlaceKit.Services
             document.Sections[1].Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Range.Text =
                 $"Warranty claim {pattern.Format("Claim number")} \u00B7 {pattern.Format("Customer")}";
 
+            document.Variables.Add(GuideSamples.DocumentVariable, "1");
             document.UndoClear();
             document.Saved = true;
             return document;
         }
 
+        // The guide until it is saved: a document saved from it is the user's own, maybe a template for real claims.
+        public static bool IsGuide(Word.Document document) =>
+            string.IsNullOrEmpty(document.Path) &&
+            document.Variables.Cast<Word.Variable>().Any(variable => variable.Name == GuideSamples.DocumentVariable);
+
         static List<(Kind Kind, string Text)> Content(PlaceholderPattern pattern)
         {
             string P(string name) => pattern.Format(name);
-            return new List<(Kind, string)>
+            List<(Kind, string)> content = new List<(Kind, string)>
             {
                 (Kind.Title, "Try PlaceKit"),
                 (Kind.Text, "PlaceKit is for documents you write again and again with different details, like claims, offers, contracts and letters. " +
@@ -43,12 +49,13 @@ namespace PlaceKit.Services
                 (Kind.Step, "Finalize. When the letter is ready, click Finalize. The fields turn back into plain text, ready to send. " +
                     "For placeholders left empty, you choose: turn them back into markers or delete them. Save and finalize in the editor does both in one go."),
                 (Kind.Subheading, "More to try"),
-                (Kind.Feature, "Detect. For a finished document without markers, click Detect. Claude or ChatGPT suggests the parts that change, like names, dates and amounts, " +
-                    "and you choose which of them become placeholders."),
-                (Kind.Feature, "From text. In the editor, click From text and paste an email or notes. Claude or ChatGPT finds the values, and you check them before saving."),
+                (Kind.Feature, "Detect. The order confirmation on the last page has no markers. Click Detect, and Claude or ChatGPT suggests the parts that change, " +
+                    "like names, dates and amounts; you choose which of them become placeholders."),
+                (Kind.Feature, "From text. After Create, click From text in the editor. A sample email is already filled in; Claude or ChatGPT finds the values in it, " +
+                    "and you check them before saving."),
                 (Kind.Feature, "Export and Import. In the editor, Export saves the values to a file, and Import loads them into the next claim."),
                 (Kind.Feature, "Settings. Choose other markers, where the editor opens and what Finalize does with empty placeholders. " +
-                    "Detect and From text need your own API key, which you add here. The Updates page checks for new versions."),
+                    "Detect and From text need your own API key, which you add here; in this guide they work without one. The Updates page checks for new versions."),
                 (Kind.Text, "Each step is a single undo, so Ctrl+Z takes you back. When you are done, close this document without saving."),
                 (Kind.ClaimStart, P("Customer")),
                 (Kind.Text, P("Customer address")),
@@ -65,6 +72,10 @@ namespace PlaceKit.Services
                 (Kind.Line, P("Customer contact")),
                 (Kind.Text, P("Customer")),
             };
+
+            // The order confirmation: its heading on a new page, the company line without space below.
+            content.AddRange(GuideSamples.OrderConfirmation.Select((text, index) => (index == 0 ? Kind.PageHeading : index == 1 ? Kind.Line : Kind.Text, text)));
+            return content;
         }
 
         static void Write(Word.Document document, List<(Kind Kind, string Text)> content)
@@ -73,6 +84,7 @@ namespace PlaceKit.Services
 
             int index = 0;
             Word.Range rows = null;
+            int? confirmationStart = null;
             foreach (Word.Paragraph paragraph in document.Paragraphs)
             {
                 (Kind kind, string text) = content[index++];
@@ -97,7 +109,17 @@ namespace PlaceKit.Services
                     case Kind.Row:
                         rows = rows == null ? paragraph.Range : document.Range(rows.Start, paragraph.Range.End);
                         break;
+                    case Kind.PageHeading:
+                        paragraph.PageBreakBefore = -1;
+                        confirmationStart = paragraph.Range.Start;
+                        break;
                 }
+            }
+
+            // Its names would get spelling marks too.
+            if (confirmationStart.HasValue)
+            {
+                document.Range(confirmationStart.Value, document.Content.End).NoProofing = -1;
             }
 
             if (rows != null)
@@ -126,6 +148,7 @@ namespace PlaceKit.Services
                 case Kind.Subheading:
                     return Word.WdBuiltinStyle.wdStyleHeading2;
                 case Kind.Heading:
+                case Kind.PageHeading:
                     return Word.WdBuiltinStyle.wdStyleHeading1;
                 default:
                     return Word.WdBuiltinStyle.wdStyleNormal;
@@ -149,6 +172,9 @@ namespace PlaceKit.Services
 
             // Tab-separated columns; consecutive rows become a table.
             Row,
+
+            // The order confirmation's heading, on a page of its own
+            PageHeading,
         }
     }
 }

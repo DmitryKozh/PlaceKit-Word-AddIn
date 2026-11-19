@@ -36,6 +36,24 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Guide_KeyAddedInSettings_AsksTheService()
+        {
+            _ai.HasApiKey = false;
+            _ai.OnOpenSettings = () => _ai.HasApiKey = true;
+            _finder.Values["Date"] = "19 November 2026";
+            FillFromTextViewModel dialog = Create();
+            dialog.UseGuide();
+            Assert.IsTrue(dialog.IsSample);
+
+            dialog.ChangeServiceCommand.Execute(null);
+            dialog.FindCommand.Execute(null);
+
+            Assert.IsFalse(dialog.IsSample);
+            Assert.AreEqual(1, _finder.Calls);
+            StringAssert.StartsWith(_finder.LastText, "Hamburg, 19 November 2026", "the sample email, now sent");
+        }
+
+        [TestMethod]
         public void Find_NeedsText()
         {
             FillFromTextViewModel dialog = Create();

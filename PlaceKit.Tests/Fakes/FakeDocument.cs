@@ -15,6 +15,8 @@ namespace PlaceKit.Tests.Fakes
 
         public string Name { get; set; } = "Offer";
 
+        public bool IsGuide { get; set; }
+
         public List<PlaceholderInfo> Placeholders { get; set; }
 
         public List<IReadOnlyDictionary<string, string>> Saves { get; } = new List<IReadOnlyDictionary<string, string>>();
@@ -75,6 +77,8 @@ namespace PlaceKit.Tests.Fakes
     sealed class FailingDocument : IPlaceholderDocument
     {
         public string Name => "Failing";
+
+        public bool IsGuide => false;
 
         public IReadOnlyList<PlaceholderInfo> LoadPlaceholders() => throw new InvalidOperationException("boom");
 

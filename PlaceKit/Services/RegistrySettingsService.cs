@@ -18,6 +18,7 @@ namespace PlaceKit.Services
         const string AiProviderValue = "AiProvider";
         const string DetectNoteValue = "DetectNote";
         const string CheckForUpdatesValue = "CheckForUpdates";
+        const string WelcomeShownValue = "WelcomeShown";
 
         readonly string _keyPath;
 
@@ -53,6 +54,9 @@ namespace PlaceKit.Services
                 settings.AiProvider = ReadEnum(key, AiProviderValue, settings.AiProvider);
                 settings.DetectNote = key.GetValue(DetectNoteValue) as string ?? settings.DetectNote;
                 settings.CheckForUpdates = ReadFlag(key, CheckForUpdatesValue, settings.CheckForUpdates);
+
+                // Settings saved by a version without the welcome: that user knows PlaceKit already.
+                settings.WelcomeShown = ReadFlag(key, WelcomeShownValue, fallback: true);
             }
 
             return settings;
@@ -72,6 +76,7 @@ namespace PlaceKit.Services
                 key.SetValue(AiProviderValue, settings.AiProvider.ToString(), RegistryValueKind.String);
                 key.SetValue(DetectNoteValue, settings.DetectNote ?? string.Empty, RegistryValueKind.String);
                 key.SetValue(CheckForUpdatesValue, settings.CheckForUpdates ? 1 : 0, RegistryValueKind.DWord);
+                key.SetValue(WelcomeShownValue, settings.WelcomeShown ? 1 : 0, RegistryValueKind.DWord);
             }
         }
 

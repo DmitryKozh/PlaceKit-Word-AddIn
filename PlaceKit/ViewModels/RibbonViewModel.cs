@@ -24,9 +24,11 @@ namespace PlaceKit.ViewModels
         readonly IAiService _ai;
         readonly IPlaceholderDetector _detector;
         readonly Func<SettingsViewModel> _createSettings;
+        readonly Func<WelcomeViewModel> _createWelcome;
 
         public RibbonViewModel(IWordHost wordHost, IPlaceholderService placeholders, ISettingsService settings, IDialogService dialogs, IProgressService progress, IEditorService editors, IGuideService guide,
-            IAiService ai, IPlaceholderDetector detector, ProductInfo product, IUrlLauncher urlLauncher, IUpdateService updates, Func<SettingsViewModel> createSettings)
+            IAiService ai, IPlaceholderDetector detector, ProductInfo product, IUrlLauncher urlLauncher, IUpdateService updates, Func<SettingsViewModel> createSettings,
+            Func<WelcomeViewModel> createWelcome)
         {
             _wordHost = wordHost;
             _placeholders = placeholders;
@@ -38,6 +40,7 @@ namespace PlaceKit.ViewModels
             _ai = ai;
             _detector = detector;
             _createSettings = createSettings;
+            _createWelcome = createWelcome;
             AvailableUpdate = updates.AvailableUpdate;
             updates.AvailableUpdateChanged += (sender, e) => AvailableUpdate = updates.AvailableUpdate;
 
@@ -45,7 +48,7 @@ namespace PlaceKit.ViewModels
             DetectCommand = new RelayCommand(() => Run(DetectPlaceholders));
             FillCommand = new RelayCommand(() => Run(FillPlaceholders));
             FinalizeCommand = new RelayCommand(() => Run(FinalizePlaceholders));
-            GuideCommand = new RelayCommand(() => Run(() => _guide.CreateGuide(_settings.Load().CreatePattern())));
+            GuideCommand = new RelayCommand(() => Run(OpenGuide));
             SettingsCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<SettingsViewModel>()));
             AboutCommand = new RelayCommand(() => Run(() => _dialogs.ShowDialog<AboutViewModel>()));
             HireCommand = new RelayCommand(() => Run(() => urlLauncher.Open(product.Link(product.Website, "ribbon"))));
@@ -77,6 +80,39 @@ namespace PlaceKit.ViewModels
 
         public ICommand UpdateCommand { get; }
 
+        // Once after installing, and only when a person started Word: a program running Word would wait for the window forever.
+        // False when it should be tried again later, at the next document window.
+        public bool ShowWelcomeOnce()
+        {
+            bool settled = true;
+            Run(() =>
+            {
+                PlaceKitSettings settings = _settings.Load();
+                if (settings.WelcomeShown)
+                {
+                    return;
+                }
+
+                if (!_wordHost.IsUserSession)
+                {
+                    settled = false;
+                    return;
+                }
+
+                // Saved first, so a second request while the window is open finds it settled.
+                settings.WelcomeShown = true;
+                _settings.Save(settings);
+                if (_dialogs.ShowDialog(_createWelcome()) == true)
+                {
+                    OpenGuide();
+                }
+            });
+
+            return settled;
+        }
+
+        void OpenGuide() => _guide.CreateGuide(_settings.Load().CreatePattern());
+
         void ShowUpdate()
         {
             SettingsViewModel settings = _createSettings();
@@ -101,12 +137,13 @@ namespace PlaceKit.ViewModels
                 _editors.Refresh(document);
                 ShowMessage(TextFormat.Canceled(result.Processed, "created"), MessageKind.Information);
             }
+            else if (result.Processed == 0 && result.Skipped == 0)
+            {
+                OfferDetect(pattern);
+            }
             else if (result.Processed == 0)
             {
-                ShowMessage(result.Skipped == 0
-                        ? $"No text matching {pattern.Format("text")} was found in the document."
-                        : $"No placeholders were created: {TextFormat.Quantity(result.Skipped, "marker")} could not be converted.",
-                    MessageKind.Information);
+                ShowMessage($"No placeholders were created: {TextFormat.Quantity(result.Skipped, "marker")} could not be converted.", MessageKind.Information);
             }
             else if (ShouldOpenEditor(result, settings,
                 $"{TextFormat.Quantity(result.Skipped, "marker")} skipped: empty, too long, split across lines or inside another control."))
@@ -119,14 +156,31 @@ namespace PlaceKit.ViewModels
             }
         }
 
+        // No markers often means a finished document, which is what Detect is for.
+        void OfferDetect(PlaceholderPattern pattern)
+        {
+            string question = $"No text matching {pattern.Format("text")} was found in the document.\n\n" +
+                "Detect can find the parts that change, such as names, dates and amounts, with Claude or ChatGPT. Try Detect now?";
+            if (_dialogs.Confirm(Caption, question))
+            {
+                DetectPlaceholders();
+            }
+        }
+
         void DetectPlaceholders()
         {
-            if (!TryGetEditableDocument(out Word.Document document) || !_ai.EnsureApiKey("Detect"))
+            if (!TryGetEditableDocument(out Word.Document document))
             {
                 return;
             }
 
+            // The guide works without a key; the dialog uses its sample then.
             IPlaceholderDocument placeholders = new PlaceholderDocument(document, _placeholders, _progress);
+            if (!placeholders.IsGuide && !_ai.EnsureApiKey("Detect"))
+            {
+                return;
+            }
+
             string text = placeholders.ReadText();
             if (string.IsNullOrWhiteSpace(text))
             {

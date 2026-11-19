@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -62,7 +64,61 @@ namespace PlaceKit.Tests.Services
             Assert.AreEqual(1, PageOf("Each step is a single undo"));
             Assert.AreEqual(2, PageOf("{{Customer}}"));
             Assert.AreEqual(2, PageOf("Kind regards"));
-            Assert.AreEqual(2, document.ComputeStatistics(Word.WdStatistic.wdStatisticPages));
+            Assert.AreEqual(3, PageOf("Order confirmation 4711"));
+            Assert.AreEqual(3, document.ComputeStatistics(Word.WdStatistic.wdStatisticPages));
+        }
+
+        [TestMethod]
+        public void Guide_IsRecognizedUntilSaved()
+        {
+            Word.Document guide = _guide.CreateGuide(PlaceholderPattern.Default);
+            Assert.IsTrue(GuideService.IsGuide(guide));
+            Assert.IsFalse(GuideService.IsGuide(WordInstance.NewDocument("A letter.")));
+
+            // Saved, it is the user's own document, such as a template for real claims.
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".docx");
+            try
+            {
+                guide.SaveAs2(path);
+                Assert.IsFalse(GuideService.IsGuide(guide));
+            }
+            finally
+            {
+                ((Word._Document)guide).Close(Word.WdSaveOptions.wdDoNotSaveChanges);
+                File.Delete(path);
+            }
+        }
+
+        // The sample answer goes through the same checks as a real one, against the guide's own text.
+        [TestMethod]
+        public void SampleDetect_SuggestsThePartsOfTheOrderConfirmation()
+        {
+            Word.Document document = _guide.CreateGuide(PlaceholderPattern.Default);
+            _placeholders.CreatePlaceholders(document, PlaceholderPattern.Default, new ProgressRecorder(), CancellationToken.None);
+            string text = _placeholders.GetText(document);
+            List<string> existing = _placeholders.GetPlaceholders(document, new ProgressRecorder(), CancellationToken.None).Select(p => p.Name).ToList();
+
+            IReadOnlyList<DetectedPlaceholder> found = GuideSamples.Detector.Detect(text, text, "", existing, PlaceholderPattern.Default);
+            PlaceholderOperationResult created = _placeholders.CreatePlaceholdersFromText(document, found, new ProgressRecorder(), CancellationToken.None);
+
+            CollectionAssert.AreEqual(
+                new[] { "Client", "Client address", "Contact", "Confirmation number", "Order date", "Product", "Delivery day", "Total" },
+                found.Select(placeholder => placeholder.Name).ToList());
+            Assert.AreEqual(2, found.Single(placeholder => placeholder.Name == "Confirmation number").Occurrences, "heading and text");
+            Assert.AreEqual(found.Count, created.Processed);
+            Assert.AreEqual(0, created.Skipped);
+        }
+
+        [TestMethod]
+        public void SampleFromText_FillsEveryPlaceholderOfTheClaim()
+        {
+            Word.Document document = _guide.CreateGuide(PlaceholderPattern.Default);
+            _placeholders.CreatePlaceholders(document, PlaceholderPattern.Default, new ProgressRecorder(), CancellationToken.None);
+            List<string> names = _placeholders.GetPlaceholders(document, new ProgressRecorder(), CancellationToken.None).Select(p => p.Name).ToList();
+
+            IReadOnlyDictionary<string, string> values = GuideSamples.ValueFinder.FindValues(GuideSamples.Email, names);
+
+            CollectionAssert.AreEquivalent(SampleNames, values.Keys.ToList());
         }
 
         // The guide's own text must not look like a placeholder, whatever the markers.

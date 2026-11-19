@@ -44,7 +44,15 @@ namespace PlaceKit
             services.AddSingleton<RibbonViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<AboutViewModel>();
+            services.AddTransient<WelcomeViewModel>();
+            services.AddSingleton<Func<WelcomeViewModel>>(provider => () => provider.GetRequiredService<WelcomeViewModel>());
             services.AddSingleton<Func<SettingsViewModel>>(provider => () => provider.GetRequiredService<SettingsViewModel>());
+            services.AddSingleton<Func<string, AiSetupViewModel>>(provider => feature => new AiSetupViewModel(
+                feature,
+                provider.GetRequiredService<ISettingsService>(),
+                provider.GetRequiredService<IApiKeyStore>(),
+                provider.GetRequiredService<IAiService>(),
+                provider.GetRequiredService<IUrlLauncher>()));
             services.AddSingleton<Func<IReadOnlyList<string>, FillFromTextViewModel>>(provider => names => new FillFromTextViewModel(
                 names,
                 provider.GetRequiredService<IValueFinder>(),

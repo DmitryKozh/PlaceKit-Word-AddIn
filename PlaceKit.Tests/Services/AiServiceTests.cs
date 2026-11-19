@@ -22,7 +22,8 @@ namespace PlaceKit.Tests.Services
         [TestInitialize]
         public void Create() =>
             _ai = new AiService(new[] { _claude, _openAI }, _settings, _keys, new InlineProgress(), _dialogs,
-                () => new SettingsViewModel(_settings, _keys, _ai, new FakeUrlLauncher(), new FakeUpdateService(), TestProduct.Create()));
+                () => new SettingsViewModel(_settings, _keys, _ai, new FakeUrlLauncher(), new FakeUpdateService(), TestProduct.Create()),
+                feature => new AiSetupViewModel(feature, _settings, _keys, _ai, new FakeUrlLauncher()));
 
         [TestMethod]
         public void Send_UsesTheServiceAndKeyChosenInSettings()
@@ -60,33 +61,30 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
-        public void EnsureApiKey_DoesNotAskWhenThereIsAKey()
+        public void OpenSettings_ShowsTheAiPage()
         {
-            Assert.IsTrue(_ai.EnsureApiKey("From text"));
-            Assert.AreEqual(0, _dialogs.Confirmations);
+            _ai.OpenSettings();
+
+            Assert.IsTrue(((SettingsViewModel)_dialogs.Shown.Single()).ShowAiPage);
         }
 
         [TestMethod]
-        public void EnsureApiKey_StopsWhenTheUserDeclines()
+        public void EnsureApiKey_DoesNotAskWhenThereIsAKey()
         {
-            _keys.Claude = null;
-
-            Assert.IsFalse(_ai.EnsureApiKey("From text"));
-            Assert.AreEqual(1, _dialogs.Confirmations);
+            Assert.IsTrue(_ai.EnsureApiKey("From text"));
             Assert.AreEqual(0, _dialogs.Shown.Count);
         }
 
         [TestMethod]
-        public void EnsureApiKey_OpensSettingsOnTheAiPage()
+        public void EnsureApiKey_ShowsTheSetupForTheFeature()
         {
             _keys.Claude = null;
-            _dialogs.ConfirmAnswer = true;
             _dialogs.OnShowDialog = dialog =>
             {
-                var settings = (SettingsViewModel)dialog;
-                Assert.IsTrue(settings.ShowAiPage);
-                settings.NewApiKey = "pasted key";
-                settings.SaveCommand.Execute(null);
+                var setup = (AiSetupViewModel)dialog;
+                StringAssert.StartsWith(setup.Intro, "Detect uses Claude or ChatGPT");
+                setup.NewApiKey = "pasted key";
+                setup.ConnectCommand.Execute(null);
             };
 
             Assert.IsTrue(_ai.EnsureApiKey("Detect"));
@@ -94,13 +92,12 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
-        public void EnsureApiKey_IsFalseWhenSettingsCloseWithoutAKey()
+        public void EnsureApiKey_IsFalseWhenTheSetupClosesWithoutAKey()
         {
             _keys.Claude = null;
-            _dialogs.ConfirmAnswer = true;
 
             Assert.IsFalse(_ai.EnsureApiKey("Detect"));
-            Assert.IsInstanceOfType(_dialogs.Shown.Single(), typeof(SettingsViewModel));
+            Assert.IsInstanceOfType(_dialogs.Shown.Single(), typeof(AiSetupViewModel));
         }
     }
 }
