@@ -34,12 +34,6 @@ jobs:
           [IO.File]::WriteAllBytes("PlaceKit\PlaceKit_TemporaryKey.pfx", $cert.Export('Pfx'))
           "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
 
-      - name: Diagnostics (temporary)
-        shell: pwsh
-        run: |
-          Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Shared\Visual Studio Tools for Office\PIA" -Recurse -Filter *Word*.dll -ErrorAction SilentlyContinue | Select-Object -Expand FullName
-          Get-ChildItem "$env:windir\assembly\GAC_MSIL" -Filter "Microsoft.Office.Interop.Word" -ErrorAction SilentlyContinue | Select-Object -Expand FullName
-
       - name: Restore
         shell: pwsh
         run: '& $env:MSBUILD PlaceKit.slnx /t:Restore /p:RestorePackagesConfig=true /v:minimal'
