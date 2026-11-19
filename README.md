@@ -1,17 +1,27 @@
 # PlaceKit
 
-A Word add-in for documents you write again and again with different details. Mark the parts that change as `{{Client name}}`, `{{Order}}` and so on, click **Create**, and fill them all in from one panel.
+**Fill a Word template once. Update every occurrence.**
 
-## How it works
+PlaceKit is a Microsoft Word add-in for Windows. Turn a warranty claim, proposal, or letter into a reusable template with fields like `{{Customer}}`. Enter the customer name once and PlaceKit fills every occurrence, including in tables, headers, and footers. When you’re ready to send the document, finalize the fields as ordinary Word text.
 
-1. Write the document and mark the parts that change: `Dear {{Client name}}, ...`
-2. **Create** turns the markers into content controls. Save the document as your template.
-3. For each new case, **Fill** in the values. A name used in five places is typed once.
-4. **Finalize** turns the controls back into plain text when the document is ready.
+[**Download for Windows**](https://boringjob.work/placekit/#install) · [See the full walkthrough](https://boringjob.work/placekit/#steps) · [**Custom Word automation by BoringJob**](https://boringjob.work/contact/)
 
-Click **Guide** on the PlaceKit tab for a sample warranty claim to try it on.
+[![PlaceKit in Microsoft Word showing a warranty claim and the Fill placeholders pane](https://boringjob.work/placekit/created.webp)](https://boringjob.work/placekit/#steps)
+
+> **Built by BoringJob.** If your team generates the same documents from Word templates, spreadsheets, or internal systems, [tell me what you’re automating](https://boringjob.work/contact/). I build custom Word add-ins and document workflows.
+
+## Try it with a warranty claim
+
+1. Open **Guide** on the PlaceKit ribbon to get a sample claim. Or add markers such as `{{Customer}}` and `{{Claim number}}` to your own document.
+2. Click **Create** to turn the markers into Word content controls. Save a copy to reuse as a template.
+3. Open **Fill**, enter each value once, and save. PlaceKit updates every field with the same name.
+4. Click **Finalize** to convert the fields to ordinary Word text. Recipients can open the finished document in Word without PlaceKit.
+
+**Windows desktop Word · C# · VSTO · WPF · PolyForm Noncommercial**
 
 ## Features
+
+Create, Fill, Finalize, Import, and Export run locally. AI is optional. When you use Detect or From text, PlaceKit sends the relevant text directly to Anthropic or OpenAI using your own API key.
 
 - **Create** works in the body, tables, headers, footers, text boxes and notes. Each control gets the name as its title and `PlaceKit-{name}` as its tag.
 - **Detect** finds the placeholders in a finished document for you. Claude or ChatGPT reads the document (or just the selection) and suggests the parts that change, like names, dates and amounts. You can add a note on what to look for. You pick and rename the suggestions, and each one becomes a placeholder everywhere it appears. Suggestions are checked against the document, so made-up text never gets through. Markers already in the text, like `{{Customer}}`, are listed too and become empty placeholders, as with Create.
@@ -34,10 +44,10 @@ Each step is a single Ctrl+Z (Save and finalize counts as two), and long ones ca
 
 ## Install
 
-Download `PlaceKit.msi` from [boringjob.work/placekit](https://boringjob.work/placekit/) or [Releases](../../releases) and run it. It doesn't need admin rights. Start Word and the PlaceKit tab is there.
+Download the current MSI from [BoringJob’s PlaceKit page](https://boringjob.work/placekit/#install). Run it, then open Word and look for the **PlaceKit** tab. The installer runs per user and needs no administrator rights.
 
 - Requires Windows 10 or 11, Word 2013 or later (Microsoft 365 included), the .NET Framework 4.8 and the VSTO runtime. Current Windows and Office already have the last two, and the installer tells you if one is missing.
-- The installer isn't code-signed yet, so SmartScreen may warn about an unknown publisher. Click **More info**, then **Run anyway**.
+- The current MSI is unsigned. The [download page](https://boringjob.work/placekit/#install) provides the SHA-256 checksum.
 - To update, close Word and run the new `PlaceKit.msi`. It replaces the old version, and your settings and API keys stay.
 - Silent install, for company deployments: `msiexec /i PlaceKit.msi /qn`
 - Uninstall from Settings > Apps. PlaceKit's settings and saved API keys stay in the registry, so remove the keys in PlaceKit's Settings first.
@@ -50,7 +60,7 @@ Using it in a business, for example for a company's contracts, offers or letters
 
 The add-in installs `License.txt` and `ThirdPartyNotices.txt` (the licenses of the libraries it uses, [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) here). About opens both.
 
-## Project
+## Architecture
 
 - `PlaceKit`: the VSTO add-in (.NET Framework 4.8, WPF, MVVM). The ribbon only calls `RibbonViewModel` commands, and only services such as `PlaceholderService` touch the Word object model. Dependency injection is Microsoft.Extensions.DependencyInjection (`CompositionRoot`), and PropertyChanged.Fody implements `INotifyPropertyChanged`. The AI features use the official Anthropic and OpenAI SDKs with strict JSON schema output (`ValueRequest`, `DetectRequest`, `AiService`). The SDKs need binding redirects on .NET Framework, so the build writes `PlaceKit.dll.config`, and the add-in turns on TLS 1.2, which Office leaves off. The update check reads a small JSON file from the website in the background and hands the answer back to Word's thread (`WebsiteReleaseSource`, `UpdateService`).
 - `PlaceKit.IconRenderer`: draws the ribbon icons (PNG strips for each Office theme and scale), the installer icon and the setup wizard pictures. Run it after changing an icon; a test fails until you do.
@@ -87,15 +97,8 @@ Installed copies learn about the release from `https://boringjob.work/placekit/l
 }
 ```
 
-## Need a .NET developer?
+## About BoringJob
 
-PlaceKit is a sample of my work. I'm Dzmitry Kazhamiakin, a C# and .NET developer with 11 years of experience, and I build software for small and mid-sized businesses:
+I’m Dzmitry Kazhamiakin, the .NET developer behind [BoringJob](https://boringjob.work/). I build Word and Excel add-ins, document automation, and integrations for teams that spend too much time copying data into templates.
 
-- desktop applications and internal tools in C#, .NET and WPF
-- REST APIs, webhooks and integrations between systems
-- AI integration: document summaries, data extraction and assistants built into the software you already use
-- SQL Server databases, data processing and reporting
-- Office add-ins (VSTO), Excel and VBA automation
-- maintenance and step-by-step modernization of legacy .NET software
-
-If your team loses hours to copy-paste and routine work, [describe the problem](https://boringjob.work/contact/) at [boringjob.work](https://boringjob.work). The initial assessment is free. You can also find me on [LinkedIn](https://www.linkedin.com/in/dzmitry-kazhamiakin-55440486/).
+Need PlaceKit adapted to your workflow, a commercial license, or an add-in built for your team? [Tell me what you’re trying to automate](https://boringjob.work/contact/). You can also find me on [LinkedIn](https://www.linkedin.com/in/dzmitry-kazhamiakin-55440486/).
