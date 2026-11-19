@@ -16,6 +16,9 @@ namespace PlaceKit.Services
     {
         const int WindowNotActive = unchecked((int)0x800A11FD);
 
+        // Word's limit for Find text
+        internal const int MaxFindLength = 255;
+
         public PlaceholderOperationResult CreatePlaceholders(Word.Document document, PlaceholderPattern pattern, IProgress<ProgressInfo> progress, CancellationToken token)
         {
             List<Word.Range> stories = WordStories.GetTextStories(document).ToList();
@@ -121,6 +124,12 @@ namespace PlaceKit.Services
                     if (token.IsCancellationRequested)
                     {
                         break;
+                    }
+
+                    if (!CanFind(placeholder.Text))
+                    {
+                        tracker.Add(succeeded: false, $"\"{Shorten(placeholder.Text)}\": too long for Word to search");
+                        continue;
                     }
 
                     int found = 0;
@@ -242,7 +251,12 @@ namespace PlaceKit.Services
                     break;
                 }
 
-                if (pattern.TryGetName(range.Text, out string name) && TryCreateControl(range, name, out Word.ContentControl control, out _))
+                if (IsDeleted(range))
+                {
+                    // Not in the text any more, so neither created nor skipped. A live marker may follow the deleted part.
+                    resumeAt = matchStart + pattern.Opening.Length;
+                }
+                else if (pattern.TryGetName(range.Text, out string name) && TryCreateControl(range, name, out Word.ContentControl control, out _))
                 {
                     tracker.Add(succeeded: true);
 
@@ -266,6 +280,11 @@ namespace PlaceKit.Services
             int created = 0;
             foreach (Word.Range found in FindWholeWords(story, placeholder.Text))
             {
+                if (IsDeleted(found))
+                {
+                    continue;
+                }
+
                 matches++;
                 if (found.ParentContentControl != null || found.ContentControls.Count > 0)
                 {
@@ -289,10 +308,15 @@ namespace PlaceKit.Services
         // Each match is yielded before moving on, so the caller can wrap it in a control.
         static IEnumerable<Word.Range> FindWholeWords(Word.Range story, string text)
         {
+            if (!CanFind(text))
+            {
+                yield break;
+            }
+
             Word.Range range = story.Duplicate;
             Word.Find find = range.Find;
             find.ClearFormatting();
-            find.Text = text.Replace("^", "^^");
+            find.Text = FindText(text);
             find.MatchCase = true;
             find.MatchWholeWord = false;
             find.MatchWildcards = false;
@@ -319,6 +343,15 @@ namespace PlaceKit.Services
             }
         }
 
+        // Find still matches text deleted under Track Changes. The range Find returns lists no revisions, but a copy of it does.
+        static bool IsDeleted(Word.Range range) =>
+            range.Duplicate.Revisions.Cast<Word.Revision>().Any(revision => revision.Type == Word.WdRevisionType.wdRevisionDelete);
+
+        static string FindText(string text) => text.Replace("^", "^^");
+
+        // Longer search text makes Word throw "String parameter too long".
+        static bool CanFind(string text) => FindText(text).Length <= MaxFindLength;
+
         // Continue from an insertion point. A range up to the story end gets widened to whole table rows,
         // and Find keeps returning the same match.
         static int ContinueAt(Word.Range range, int position, Word.Range story)
@@ -339,34 +372,52 @@ namespace PlaceKit.Services
         }
 
         // keepText: the text becomes the value; otherwise the control starts empty (markers).
+        // A control Word won't set up is removed again, so the text stays as it was and the next ones still get done.
         static bool TryCreateControl(Word.Range range, string name, out Word.ContentControl control, out string error, bool keepText = false)
         {
+            control = null;
             try
             {
                 control = AddControl(range);
+                control.Tag = PlaceholderTag.Create(name);
+                control.Title = name;
+                control.MultiLine = true;
+                control.SetPlaceholderText(Text: name);
+
+                // An empty control shows its placeholder text.
+                if (!keepText)
+                {
+                    control.Range.Text = string.Empty;
+                }
+
+                error = null;
+                return true;
             }
             catch (COMException ex)
             {
                 Trace.TraceWarning("PlaceKit: cannot create placeholder '{0}': {1}", name, ex.Message);
+                RemoveControl(control);
                 control = null;
                 error = ex.Message;
                 return false;
             }
+        }
 
-            error = null;
-
-            control.Tag = PlaceholderTag.Create(name);
-            control.Title = name;
-            control.MultiLine = true;
-            control.SetPlaceholderText(Text: name);
-
-            // An empty control shows its placeholder text.
-            if (!keepText)
+        static void RemoveControl(Word.ContentControl control)
+        {
+            if (control == null)
             {
-                control.Range.Text = string.Empty;
+                return;
             }
 
-            return true;
+            try
+            {
+                control.Delete(DeleteContents: false);
+            }
+            catch (COMException ex)
+            {
+                Trace.TraceWarning("PlaceKit: cannot remove an unfinished placeholder: {0}", ex.Message);
+            }
         }
 
         // Word refuses to add a control while its document window isn't the active one (error 4605), so activate
@@ -431,15 +482,24 @@ namespace PlaceKit.Services
             return kept.ToString();
         }
 
+        // A control locked against editing stays locked; only the editor writes to it.
         static void WriteValue(Word.ContentControl control, string value)
         {
+            bool locked = control.LockContents;
             control.LockContents = false;
-            if (control.Type == Word.WdContentControlType.wdContentControlText)
+            try
             {
-                control.MultiLine = true;
-            }
+                if (control.Type == Word.WdContentControlType.wdContentControlText)
+                {
+                    control.MultiLine = true;
+                }
 
-            control.Range.Text = WordText.ToWord(value);
+                control.Range.Text = WordText.ToWord(value);
+            }
+            finally
+            {
+                control.LockContents = locked;
+            }
         }
 
         // An empty control becomes its marker again, or is deleted when there is no marker.

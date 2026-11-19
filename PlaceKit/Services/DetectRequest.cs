@@ -135,7 +135,12 @@ namespace PlaceKit.Services
                     continue;
                 }
 
-                if (!existing.Contains(tidyName))
+                // Placeholders match by their exact name, so an existing one keeps its spelling.
+                if (existing.TryGetValue(tidyName, out string existingName))
+                {
+                    tidyName = existingName;
+                }
+                else
                 {
                     tidyName = UniqueName(tidyName, names);
                 }

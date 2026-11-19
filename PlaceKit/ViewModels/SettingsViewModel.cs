@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Input;
 using PlaceKit.Interfaces;
 using PlaceKit.Models;
@@ -48,6 +49,7 @@ namespace PlaceKit.ViewModels
             CheckNowCommand = new RelayCommand(CheckNow);
             DownloadUpdateCommand = new RelayCommand(() => _urlLauncher.Open(AvailableUpdate.Installer ?? ReleaseNotes()), () => IsUpdateAvailable);
             OpenReleaseNotesCommand = new RelayCommand(() => _urlLauncher.Open(ReleaseNotes()), () => IsUpdateAvailable);
+            ShowLogFileCommand = new RelayCommand(ShowLogFile);
         }
 
         static int PageCount => Enum.GetValues(typeof(SettingsPage)).Length;
@@ -174,6 +176,10 @@ namespace PlaceKit.ViewModels
 
         public bool HasUpdateCheckMessage => UpdateCheckMessage != null;
 
+        public string LogFileMessage { get; private set; }
+
+        public bool HasLogFileMessage => LogFileMessage != null;
+
         public bool IsValid =>
             PlaceholderPattern.ValidateMarker(OpeningMarker) == null && PlaceholderPattern.ValidateMarker(ClosingMarker) == null;
 
@@ -202,6 +208,8 @@ namespace PlaceKit.ViewModels
         public ICommand DownloadUpdateCommand { get; }
 
         public ICommand OpenReleaseNotesCommand { get; }
+
+        public ICommand ShowLogFileCommand { get; }
 
         string IDataErrorInfo.Error => null;
 
@@ -309,6 +317,20 @@ namespace PlaceKit.ViewModels
         }
 
         Uri ReleaseNotes() => _product.Link(AvailableUpdate.Page, "update");
+
+        // The log only exists once something went wrong.
+        void ShowLogFile()
+        {
+            if (File.Exists(_product.LogFile))
+            {
+                LogFileMessage = null;
+                _urlLauncher.ShowInFolder(_product.LogFile);
+            }
+            else
+            {
+                LogFileMessage = "No problems have been logged yet.";
+            }
+        }
 
         void CheckNow()
         {

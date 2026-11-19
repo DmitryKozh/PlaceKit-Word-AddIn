@@ -179,9 +179,29 @@ namespace PlaceKit.ViewModels
             Error = null;
         }
 
+        // Placeholders match by their exact name, so names that differ only in case take one spelling:
+        // an existing placeholder's, or else the first chosen one's (markers come first).
         void Create()
         {
-            Chosen = Items.Where(item => item.IsChosen).Select(item => item.ToPlaceholder()).ToList();
+            Dictionary<string, string> spellings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string name in _existingNames.Where(name => !spellings.ContainsKey(name)))
+            {
+                spellings.Add(name, name);
+            }
+
+            List<DetectedPlaceholder> chosen = new List<DetectedPlaceholder>();
+            foreach (DetectedPlaceholder placeholder in Items.Where(item => item.IsChosen).Select(item => item.ToPlaceholder()))
+            {
+                if (!spellings.TryGetValue(placeholder.Name, out string spelling))
+                {
+                    spelling = placeholder.Name;
+                    spellings.Add(spelling, spelling);
+                }
+
+                chosen.Add(placeholder.WithName(spelling));
+            }
+
+            Chosen = chosen;
             Close(true);
         }
 

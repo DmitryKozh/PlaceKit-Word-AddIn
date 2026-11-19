@@ -157,6 +157,61 @@ namespace PlaceKit.Tests.Services
             StringAssert.StartsWith(_dialogs.Messages.Single(), "This document has no placeholders yet.");
         }
 
+        [TestMethod]
+        public void CloseDocument_WithoutUnsavedValues_DoesNotAsk()
+        {
+            Word.Document document = DocumentWithPlaceholders();
+            _service.Open(document);
+
+            Assert.IsTrue(_service.CanCloseDocument(document));
+            Assert.AreEqual(0, _dialogs.Questions.Count);
+            Assert.IsTrue(_service.CanCloseDocument(WordInstance.NewDocument("No editor here.")));
+        }
+
+        [TestMethod]
+        public void CloseDocument_Yes_SavesTheValuesFirst()
+        {
+            Word.Document document = DocumentWithPlaceholders();
+            _service.Open(document);
+            EditorViewModel editor = _panes.Shown;
+            Item(editor, "Client").Value = "Contoso";
+            _dialogs.QuestionAnswer = true;
+
+            Assert.IsTrue(_service.CanCloseDocument(document));
+
+            StringAssert.Contains(_dialogs.Questions.Single(), "1 unsaved change");
+            Assert.AreEqual("Contoso", ControlText(document, "Client"));
+            Assert.IsFalse(editor.HasChanges, "asked again only for new changes");
+        }
+
+        [TestMethod]
+        public void CloseDocument_No_LeavesTheDocumentAsItIs()
+        {
+            Word.Document document = DocumentWithPlaceholders();
+            _service.Open(document);
+            Item(_panes.Shown, "Client").Value = "Contoso";
+            _dialogs.QuestionAnswer = false;
+
+            Assert.IsTrue(_service.CanCloseDocument(document));
+
+            Assert.IsTrue(WordInstance.PlaceKitControls(document).Single(control => control.Title == "Client").ShowingPlaceholderText);
+        }
+
+        [TestMethod]
+        public void CloseDocument_Cancel_KeepsItOpenWithTheValues()
+        {
+            Word.Document document = DocumentWithPlaceholders();
+            _service.Open(document);
+            EditorViewModel editor = _panes.Shown;
+            Item(editor, "Client").Value = "Contoso";
+            _dialogs.QuestionAnswer = null;
+
+            Assert.IsFalse(_service.CanCloseDocument(document));
+
+            Assert.AreEqual("Contoso", Item(editor, "Client").Value);
+            Assert.IsTrue(editor.HasChanges);
+        }
+
         Word.Document DocumentWithPlaceholders()
         {
             Word.Document document = WordInstance.NewDocument("To {{Client}} about {{Order}}.");

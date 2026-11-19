@@ -260,7 +260,9 @@ namespace PlaceKit.ViewModels
             }
 
             string message = $"Filled in {TextFormat.Quantity(filled, "placeholder")} from {Path.GetFileName(path)}. Check the values and click Save to write them to the document.";
-            int unmatched = values.Count - filled;
+
+            // One name in the file can fill two placeholders that differ only in case.
+            int unmatched = values.Keys.Count(name => !Items.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)));
             if (unmatched > 0)
             {
                 message += $" {TextFormat.Quantity(unmatched, "name")} in the file did not match a placeholder.";

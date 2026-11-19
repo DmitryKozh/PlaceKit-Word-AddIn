@@ -101,6 +101,37 @@ namespace PlaceKit.Services
             }
         }
 
+        // Values typed in the side panel are not in the document yet, so Word does not ask about them.
+        public bool CanCloseDocument(Word.Document document)
+        {
+            RemoveClosedDocuments();
+            EditorViewModel editor = Find(document);
+            if (editor == null || !editor.HasChanges)
+            {
+                return true;
+            }
+
+            string question = $"The PlaceKit editor of {document.Name} has {TextFormat.Quantity(editor.ModifiedCount, "unsaved change")}. Save them to the document before it closes?";
+            bool? save = _dialogs.AskYesNoCancel("Unsaved changes", question);
+            if (save == null)
+            {
+                return false;
+            }
+
+            if (save == true)
+            {
+                if (!editor.SaveChanges())
+                {
+                    return false;
+                }
+
+                // In case Word's own question is canceled and the document stays open.
+                editor.Reload();
+            }
+
+            return true;
+        }
+
         void ShowInPane(EditorViewModel editor)
         {
             editor.AttachTo(EditorPlacement.SidePanel);

@@ -5,5 +5,8 @@ namespace PlaceKit.Interfaces
     public interface IUrlLauncher
     {
         void Open(Uri url);
+
+        // File Explorer with the file selected, ready to attach to an email
+        void ShowInFolder(string path);
     }
 }

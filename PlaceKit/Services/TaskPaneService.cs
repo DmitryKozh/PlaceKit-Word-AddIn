@@ -24,12 +24,18 @@ namespace PlaceKit.Services
             _taskPanes = taskPanes ?? throw new ArgumentNullException(nameof(taskPanes));
         }
 
+        // A document can have several windows (View > New Window). The pane belongs to one of them and
+        // goes when that window closes, so it is made again in the window the user works in.
         public void Show(EditorViewModel editor, Word.Window window)
         {
             if (_panes.TryGetValue(editor, out CustomTaskPane pane))
             {
-                pane.Visible = true;
-                return;
+                if (TryShowIn(pane, window))
+                {
+                    return;
+                }
+
+                Remove(editor);
             }
 
             pane = _taskPanes().Add(new EditorPaneControl(editor), editor.Title, window);
@@ -44,7 +50,14 @@ namespace PlaceKit.Services
         {
             if (_panes.TryGetValue(editor, out CustomTaskPane pane))
             {
-                pane.Visible = false;
+                try
+                {
+                    pane.Visible = false;
+                }
+                catch (Exception ex) when (IsGone(ex))
+                {
+                    Remove(editor);
+                }
             }
         }
 
@@ -63,9 +76,31 @@ namespace PlaceKit.Services
                 pane.Visible = false;
                 pane.Control.BeginInvoke(new Action(() => RemovePane(pane)));
             }
-            catch (Exception ex) when (ex is COMException || ex is ObjectDisposedException || ex is InvalidOperationException)
+            catch (Exception ex) when (IsGone(ex))
             {
                 RemovePane(pane);
+            }
+        }
+
+        // What Office and VSTO throw for a pane deleted together with its window
+        static bool IsGone(Exception ex) => ex is COMException || ex is ObjectDisposedException || ex is InvalidOperationException;
+
+        // false if the pane is in another window or was deleted with its own (its Window is null then)
+        static bool TryShowIn(CustomTaskPane pane, Word.Window window)
+        {
+            try
+            {
+                if (!(pane.Window is Word.Window paneWindow) || paneWindow.Hwnd != window.Hwnd)
+                {
+                    return false;
+                }
+
+                pane.Visible = true;
+                return true;
+            }
+            catch (Exception ex) when (IsGone(ex))
+            {
+                return false;
             }
         }
 
@@ -75,7 +110,7 @@ namespace PlaceKit.Services
             {
                 _taskPanes().Remove(pane);
             }
-            catch (Exception ex) when (ex is COMException || ex is ObjectDisposedException)
+            catch (Exception ex) when (IsGone(ex))
             {
                 // Already gone with its document window.
             }

@@ -13,6 +13,9 @@ namespace PlaceKit.Interfaces
 
         bool Confirm(string title, string message);
 
+        // Yes, No, or null for Cancel
+        bool? AskYesNoCancel(string title, string message);
+
         // null on cancel
         string ShowOpenFileDialog(string title, string filter);
 

@@ -75,6 +75,15 @@ namespace PlaceKit.Tests.Services
             CollectionAssert.AreEqual(new[] { "Client name", "Client name" }, found.Select(p => p.Name).ToList());
         }
 
+        // Placeholders match by exact name, so a different case would make a second one.
+        [TestMethod]
+        public void Parse_TakesTheSpellingOfAnExistingName()
+        {
+            IReadOnlyList<DetectedPlaceholder> found = DetectRequest.Parse(Answer(Suggestion("client NAME", "Anna Berg", "")), Document, new[] { "Client name" });
+
+            Assert.AreEqual("Client name", found.Single().Name);
+        }
+
         [DataTestMethod]
         [DataRow("not json")]
         [DataRow("{\"values\":[]}")]

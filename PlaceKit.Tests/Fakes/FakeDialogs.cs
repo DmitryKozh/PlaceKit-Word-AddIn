@@ -17,6 +17,11 @@ namespace PlaceKit.Tests.Fakes
 
         public bool ConfirmAnswer { get; set; }
 
+        public List<string> Questions { get; } = new List<string>();
+
+        // Yes, No, or null for Cancel
+        public bool? QuestionAnswer { get; set; }
+
         public Action<DialogViewModelBase> OnShowDialog { get; set; } = viewModel => { };
 
         // What the user picks in the file dialogs; null means Cancel.
@@ -52,6 +57,12 @@ namespace PlaceKit.Tests.Fakes
         {
             Confirmations++;
             return ConfirmAnswer;
+        }
+
+        public bool? AskYesNoCancel(string title, string message)
+        {
+            Questions.Add(message);
+            return QuestionAnswer;
         }
 
         public string ShowOpenFileDialog(string title, string filter) => OpenFileResult;

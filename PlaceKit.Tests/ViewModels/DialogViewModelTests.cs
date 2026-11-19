@@ -76,6 +76,28 @@ namespace PlaceKit.Tests.ViewModels
             var question = new MessageViewModel("PlaceKit", "Discard?", MessageKind.Question);
             Assert.IsTrue(question.IsQuestion);
             Assert.AreEqual("_Yes", question.AcceptText);
+            Assert.IsFalse(question.CanCancel);
+            Assert.AreSame(question.RejectCommand, question.EscapeCommand);
+        }
+
+        [TestMethod]
+        public void Message_WithCancel_RepliesYesNoOrNothing()
+        {
+            var yes = new MessageViewModel("PlaceKit", "Save?", MessageKind.Question, canCancel: true);
+            yes.AcceptCommand.Execute(null);
+            Assert.AreEqual(true, yes.Reply);
+
+            var no = new MessageViewModel("PlaceKit", "Save?", MessageKind.Question, canCancel: true);
+            no.RejectCommand.Execute(null);
+            Assert.AreEqual(false, no.Reply);
+
+            var cancel = new MessageViewModel("PlaceKit", "Save?", MessageKind.Question, canCancel: true);
+            Assert.AreSame(cancel.CancelCommand, cancel.EscapeCommand);
+            bool? result = true;
+            cancel.CloseRequested += (sender, e) => result = e.DialogResult;
+            cancel.EscapeCommand.Execute(null);
+            Assert.IsNull(cancel.Reply);
+            Assert.AreEqual(false, result);
         }
 
         [TestMethod]

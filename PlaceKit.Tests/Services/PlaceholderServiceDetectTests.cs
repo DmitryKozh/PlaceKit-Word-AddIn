@@ -267,6 +267,43 @@ namespace PlaceKit.Tests.Services
         }
 
         // The same names in the body, a table, the header and a text box, and a longer number around one of them.
+        [TestMethod]
+        public void Create_LeavesTextDeletedWhileTrackedAlone()
+        {
+            const string Text = "Dear Anna Berg, regards Anna Berg.";
+            Word.Document document = WordInstance.NewDocument(Text);
+            Word.View view = document.ActiveWindow.View;
+            view.ShowRevisionsAndComments = true;
+            view.RevisionsView = Word.WdRevisionsView.wdRevisionsViewFinal;
+            view.MarkupMode = Word.WdRevisionsMode.wdInLineRevisions;
+            document.TrackRevisions = true;
+            document.Range(Text.LastIndexOf("Anna Berg"), Text.LastIndexOf("Anna Berg") + "Anna Berg".Length).Delete();
+            document.TrackRevisions = false;
+
+            PlaceholderOperationResult result = Create(document, ("Client name", "Anna Berg"));
+
+            Assert.AreEqual(1, result.Processed);
+            Assert.AreEqual(1, WordInstance.PlaceKitControls(document).Count);
+            Assert.AreEqual(1, document.Revisions.Count);
+        }
+
+        // Each ^ doubles in the search text, which Word limits to 255 characters.
+        [TestMethod]
+        public void Create_SkipsTextTooLongForWordToSearch()
+        {
+            string formula = string.Join(" ", Enumerable.Repeat("x^^", 62));
+            Assert.IsTrue(formula.Length <= 250 && formula.Replace("^", "^^").Length > PlaceholderService.MaxFindLength);
+            Word.Document document = WordInstance.NewDocument($"Dear Anna Berg, see {formula}.");
+
+            PlaceholderOperationResult result = Create(document, ("Formula", formula), ("Client name", "Anna Berg"));
+
+            Assert.AreEqual(1, result.Processed);
+            Assert.AreEqual(1, result.Skipped);
+            StringAssert.Contains(result.Problems.Single(), "too long for Word to search");
+            Assert.AreEqual("Anna Berg", Control(document, "Client name").Range.Text);
+            Assert.IsFalse(_service.SelectText(document, formula));
+        }
+
         static Word.Document SampleDocument()
         {
             Word.Document document = WordInstance.NewDocument(

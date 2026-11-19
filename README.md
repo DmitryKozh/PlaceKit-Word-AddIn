@@ -51,6 +51,7 @@ Download the current MSI from [BoringJob’s PlaceKit page](https://boringjob.wo
 - To update, close Word and run the new `PlaceKit.msi`. It replaces the old version, and your settings and API keys stay.
 - Silent install, for company deployments: `msiexec /i PlaceKit.msi /qn`
 - Uninstall from Settings > Apps. PlaceKit's settings and saved API keys stay in the registry, so remove the keys in PlaceKit's Settings first.
+- When something goes wrong, PlaceKit writes the details to `%LocalAppData%\BoringJob\PlaceKit\PlaceKit.log`. The file stays on your computer; attach it when you report a problem. **Show log file** on the Updates page of Settings opens its folder.
 
 ## License
 

@@ -306,6 +306,27 @@ namespace PlaceKit.Tests.ViewModels
             StringAssert.EndsWith(_dialogs.Messages.Single(), "1 name in the file did not match a placeholder.");
         }
 
+        // Names match ignoring case, so one name in the file can fill two placeholders.
+        [TestMethod]
+        public void Import_CountsTheNamesInTheFileThatMatchNothing()
+        {
+            var document = new FakeDocument(new PlaceholderInfo("Name", "", 1, false), new PlaceholderInfo("name", "", 1, false));
+            var editor = new EditorViewModel(document, _dialogs, _valuesFile, _ai, CreateFillFromText);
+            editor.Reload();
+            _valuesFile.Files["values.json"] = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("NAME", "Anna"),
+                new KeyValuePair<string, string>("Unknown", "x"),
+            };
+            _dialogs.OpenFileResult = "values.json";
+
+            editor.ImportCommand.Execute(null);
+
+            Assert.AreEqual(2, editor.ModifiedCount);
+            StringAssert.StartsWith(_dialogs.Messages.Single(), "Filled in 2 placeholders from values.json.");
+            StringAssert.EndsWith(_dialogs.Messages.Single(), "1 name in the file did not match a placeholder.");
+        }
+
         [TestMethod]
         public void Import_ReportsAFileWithoutMatchingNames()
         {

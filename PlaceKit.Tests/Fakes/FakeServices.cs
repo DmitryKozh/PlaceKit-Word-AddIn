@@ -89,6 +89,10 @@ namespace PlaceKit.Tests.Fakes
         public List<Uri> Opened { get; } = new List<Uri>();
 
         public void Open(Uri url) => Opened.Add(url);
+
+        public List<string> ShownInFolder { get; } = new List<string>();
+
+        public void ShowInFolder(string path) => ShownInFolder.Add(path);
     }
 
     sealed class FakeEditors : IEditorService
@@ -104,6 +108,8 @@ namespace PlaceKit.Tests.Fakes
         public void FinalizeDocument(Word.Document document)
         {
         }
+
+        public bool CanCloseDocument(Word.Document document) => true;
     }
 
     sealed class FakeGuide : IGuideService
@@ -283,9 +289,9 @@ namespace PlaceKit.Tests.Fakes
 
     static class TestProduct
     {
-        public static ProductInfo Create(string version = "1.2.3") => new ProductInfo("PlaceKit", version, "Description", "Developer", "Copyright",
-            new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"), new Uri("https://www.linkedin.com/in/developer/"),
-            new Uri("https://boringjob.work/placekit/latest.json"), @"C:\PlaceKit");
+        public static ProductInfo Create(string version = "1.2.3", string logFile = @"C:\PlaceKit\Logs\PlaceKit.log") => new ProductInfo("PlaceKit", version,
+            "Description", "Developer", "Copyright", new Uri("https://boringjob.work"), new Uri("https://boringjob.work/contact/"),
+            new Uri("https://www.linkedin.com/in/developer/"), new Uri("https://boringjob.work/placekit/latest.json"), @"C:\PlaceKit", logFile);
     }
 
     static class TestRelease

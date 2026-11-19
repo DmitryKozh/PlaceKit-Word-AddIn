@@ -217,6 +217,18 @@ namespace PlaceKit.Tests.ViewModels
         }
 
         [TestMethod]
+        public void Create_SpellsANameLikeTheExistingPlaceholder()
+        {
+            DetectViewModel dialog = Create(null, "Purchase date");
+            dialog.FindCommand.Execute(null);
+
+            dialog.Items[2].Name = "purchase DATE";
+            dialog.CreateCommand.Execute(null);
+
+            CollectionAssert.AreEqual(new[] { "Client name", "Order number", "Purchase date" }, dialog.Chosen.Select(p => p.Name).ToList());
+        }
+
+        [TestMethod]
         public void Create_NeedsAChoice()
         {
             DetectViewModel dialog = Create();

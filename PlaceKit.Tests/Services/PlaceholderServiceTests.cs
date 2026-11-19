@@ -201,6 +201,74 @@ namespace PlaceKit.Tests.Services
         }
 
         [TestMethod]
+        public void Update_KeepsALockedControlLocked()
+        {
+            Word.Document document = WordInstance.NewDocument("{{Date}}");
+            Create(document);
+            Control(document, "Date").LockContents = true;
+
+            PlaceholderOperationResult result = Update(document, ("Date", "12 November"));
+
+            Assert.AreEqual(1, result.Processed);
+            Word.ContentControl date = Control(document, "Date");
+            Assert.AreEqual("12 November", date.Range.Text);
+            Assert.IsTrue(date.LockContents);
+        }
+
+        [TestMethod]
+        public void TextBoxesInHeadersAndFooters_AreCreatedFilledAndFinalized()
+        {
+            Word.Document document = WordInstance.NewDocument("Body {{Client}}.");
+            Word.Section section = document.Sections[1];
+            AddTextBox(section.Headers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary], "Header box {{Claim}}");
+            AddTextBox(section.Footers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary], "Footer box {{Client}}");
+
+            PlaceholderOperationResult created = Create(document);
+            PlaceholderOperationResult filled = Update(document, ("Client", "Contoso"), ("Claim", "C-7"));
+            PlaceholderOperationResult finalized = Finalize(document, EmptyPlaceholderAction.KeepMarkers);
+
+            Assert.AreEqual(3, created.Processed);
+            Assert.AreEqual(3, filled.Processed);
+            Assert.AreEqual(3, finalized.Processed);
+            Assert.AreEqual("Header box C-7", TextBoxText(document, "Header box"));
+            Assert.AreEqual("Footer box Contoso", TextBoxText(document, "Footer box"));
+        }
+
+        // Find also matches text deleted under Track Changes while the markup is shown.
+        [TestMethod]
+        public void Create_SkipsMarkersDeletedWhileTracked()
+        {
+            const string Text = "Keep {{Keep}}, drop {{Old}}.";
+            Word.Document document = WordInstance.NewDocument(Text);
+            Word.View view = document.ActiveWindow.View;
+            view.ShowRevisionsAndComments = true;
+            view.RevisionsView = Word.WdRevisionsView.wdRevisionsViewFinal;
+            view.MarkupMode = Word.WdRevisionsMode.wdInLineRevisions;
+            document.TrackRevisions = true;
+            document.Range(Text.IndexOf("{{Old}}"), Text.IndexOf("{{Old}}") + "{{Old}}".Length).Delete();
+            document.TrackRevisions = false;
+
+            PlaceholderOperationResult result = Create(document);
+
+            Assert.AreEqual(1, result.Processed);
+            Assert.AreEqual(0, result.Skipped);
+            CollectionAssert.AreEqual(new[] { "Keep" }, WordInstance.PlaceKitControls(document).Select(control => control.Title).ToList());
+            Assert.AreEqual(1, document.Revisions.Count, "the deletion is left for the reviewers");
+        }
+
+        [TestMethod]
+        public void Create_TakesTheLongestName()
+        {
+            string name = new string('n', PlaceholderPattern.MaxNameLength);
+            Word.Document document = WordInstance.NewDocument($"To {{{{{name}}}}} and {{{{Order}}}}.");
+
+            PlaceholderOperationResult result = Create(document);
+
+            Assert.AreEqual(2, result.Processed);
+            Assert.AreEqual("PlaceKit-" + name, Control(document, name).Tag);
+        }
+
+        [TestMethod]
         public void Update_WithEmptyValueShowsThePlaceholderTextAgain()
         {
             Word.Document document = WordInstance.NewDocument("{{Date}}");
@@ -360,6 +428,19 @@ namespace PlaceKit.Tests.Services
             box.TextFrame.TextRange.Text = "Box {{Box}}";
             return document;
         }
+
+        static void AddTextBox(Word.HeaderFooter headerFooter, string text)
+        {
+            dynamic shapes = headerFooter.Shapes;
+            dynamic box = shapes.AddTextbox(1, 100, 20, 200, 40, headerFooter.Range);
+            box.TextFrame.TextRange.Text = text;
+        }
+
+        // HeaderFooter.Shapes holds the shapes of every header and footer.
+        static string TextBoxText(Word.Document document, string start) =>
+            document.Sections[1].Headers[Word.WdHeaderFooterIndex.wdHeaderFooterPrimary].Shapes.Cast<Word.Shape>()
+                .Select(shape => shape.TextFrame.TextRange.Text.TrimEnd('\r'))
+                .Single(text => text.StartsWith(start, StringComparison.Ordinal));
 
         PlaceholderOperationResult Create(Word.Document document) =>
             _service.CreatePlaceholders(document, PlaceholderPattern.Default, _progress, CancellationToken.None);

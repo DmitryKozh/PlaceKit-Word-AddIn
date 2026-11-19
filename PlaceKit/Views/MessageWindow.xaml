@@ -14,7 +14,7 @@
         <ResourceDictionary Source="/PlaceKit;component/Views/Theme.xaml" />
     </Window.Resources>
     <Window.InputBindings>
-        <KeyBinding Key="Escape" Command="{Binding RejectCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding EscapeCommand}" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -29,6 +29,11 @@
                         Content="_No"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Visibility="{Binding IsQuestion, Converter={StaticResource BooleanToVisibility}}" />
+                <Button Margin="8,0,0,0"
+                        Command="{Binding CancelCommand}"
+                        Content="Cancel"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Visibility="{Binding CanCancel, Converter={StaticResource BooleanToVisibility}}" />
             </StackPanel>
         </Border>
 

@@ -2,13 +2,14 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using PlaceKit.Tools;
 
 namespace PlaceKit.Models
 {
     public sealed class ProductInfo
     {
         public ProductInfo(string name, string version, string description, string developer, string copyright, Uri website, Uri contactPage, Uri linkedIn,
-            Uri updateFeed, string installFolder)
+            Uri updateFeed, string installFolder, string logFile)
         {
             Name = name;
             Version = version;
@@ -21,6 +22,7 @@ namespace PlaceKit.Models
             UpdateFeed = updateFeed;
             LicenseFile = new Uri(Path.Combine(installFolder, "License.txt"));
             NoticesFile = new Uri(Path.Combine(installFolder, "ThirdPartyNotices.txt"));
+            LogFile = logFile;
         }
 
         public string Name { get; }
@@ -46,6 +48,9 @@ namespace PlaceKit.Models
 
         public Uri NoticesFile { get; }
 
+        // Errors and warnings, for a problem report
+        public string LogFile { get; }
+
         // UTM tags, for the website's analytics
         public Uri Link(Uri page, string placement) =>
             new UriBuilder(page) { Query = $"utm_source={Name.ToLowerInvariant()}&utm_medium=add-in&utm_content={placement}" }.Uri;
@@ -64,7 +69,8 @@ namespace PlaceKit.Models
                 new Uri(GetMetadata(assembly, "LinkedIn")),
                 new Uri(GetMetadata(assembly, "UpdateFeed")),
                 // CodeBase, not Location, which can be a shadow copy
-                Path.GetDirectoryName(new Uri(assembly.CodeBase).LocalPath));
+                Path.GetDirectoryName(new Uri(assembly.CodeBase).LocalPath),
+                FileLog.DefaultPath);
         }
 
         static string GetMetadata(Assembly assembly, string key) =>

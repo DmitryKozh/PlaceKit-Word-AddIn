@@ -313,6 +313,26 @@
                     </Border>
 
                     <TextBlock Margin="0,24,0,0" Style="{StaticResource CaptionTextStyle}" Text="{Binding UpdatePrivacyNote}" />
+
+                    <TextBlock Margin="0,32,0,4" Style="{StaticResource SectionTextStyle}" Text="Problem report" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="When something goes wrong, PlaceKit writes the details to a log file on your computer. Attach it when you report a problem." />
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Button VerticalAlignment="Top"
+                                Command="{Binding ShowLogFileCommand}"
+                                Content="Show _log file"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTip="Opens the folder with the log file selected" />
+                        <TextBlock Grid.Column="1"
+                                   Margin="12,6,0,0"
+                                   VerticalAlignment="Top"
+                                   Text="{Binding LogFileMessage}"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding HasLogFileMessage, Converter={StaticResource BooleanToVisibility}}" />
+                    </Grid>
                 </StackPanel>
             </Grid>
         </Grid>

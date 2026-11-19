@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlaceKit.Models;
@@ -18,6 +19,37 @@ namespace PlaceKit.Tests.ViewModels
         readonly FakeUpdateService _updates = new FakeUpdateService();
 
         SettingsViewModel Create() => new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create());
+
+        [TestMethod]
+        public void ShowLogFile_SelectsItInItsFolder()
+        {
+            string logFile = Path.GetTempFileName();
+            try
+            {
+                var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create(logFile: logFile));
+
+                settings.ShowLogFileCommand.Execute(null);
+
+                CollectionAssert.AreEqual(new[] { logFile }, _urls.ShownInFolder);
+                Assert.IsFalse(settings.HasLogFileMessage);
+            }
+            finally
+            {
+                File.Delete(logFile);
+            }
+        }
+
+        [TestMethod]
+        public void ShowLogFile_SaysWhenThereIsNoneYet()
+        {
+            string logFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "PlaceKit.log");
+            var settings = new SettingsViewModel(_store, _keys, _ai, _urls, _updates, TestProduct.Create(logFile: logFile));
+
+            settings.ShowLogFileCommand.Execute(null);
+
+            Assert.AreEqual(0, _urls.ShownInFolder.Count);
+            Assert.AreEqual("No problems have been logged yet.", settings.LogFileMessage);
+        }
 
         [TestMethod]
         public void InvalidMarker_DisablesSave()

@@ -10,5 +10,8 @@ namespace PlaceKit.Interfaces
 
         // Also closes the document's editor.
         void FinalizeDocument(Word.Document document);
+
+        // false: the user wants to keep the document open
+        bool CanCloseDocument(Word.Document document);
     }
 }

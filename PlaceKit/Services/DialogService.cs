@@ -90,6 +90,13 @@ namespace PlaceKit.Services
         public bool Confirm(string title, string message) =>
             ShowDialog(new MessageViewModel(title, message, MessageKind.Question)) == true;
 
+        public bool? AskYesNoCancel(string title, string message)
+        {
+            MessageViewModel question = new MessageViewModel(title, message, MessageKind.Question, canCancel: true);
+            ShowDialog(question);
+            return question.Reply;
+        }
+
         public string ShowOpenFileDialog(string title, string filter)
         {
             using (var dialog = new Forms.OpenFileDialog { Title = title, Filter = filter })
